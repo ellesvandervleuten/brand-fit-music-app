@@ -257,105 +257,124 @@ export default function BrandFitMusicTool() {
             )}
 
             {/* Exclusion Preview */}
-            {analysisResults && brandData.q8 && brandData.q8.length > 0 && (
-                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl">
-                    <h3 className="text-lg font-bold mb-2 text-red-800">🚫 Excluded Genres</h3>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        {brandData.q8.map((genre, i) => (
-                            <span key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                                {genre.replace('_', ' ')}
-                            </span>
-                        ))}
+                        {analysisResults && brandData.q8 && brandData.q8.length > 0 && (
+                            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl">
+                                <h3 className="text-lg font-bold mb-2 text-red-800">🚫 Excluded Genres</h3>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {brandData.q8.map((genre, i) => (
+                                        <span key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                                            {genre.replace('_', ' ')}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-red-700">
+                                    <strong>Science-based filtering:</strong> These genres will be excluded from your optimized playlist
+                                </p>
+                            </div>
+                        )}
+
+                        {status === "unauthenticated" ? (
+                            <div className="text-center bg-white p-12 rounded-2xl shadow-lg border border-indigo-200">
+                                <Rocket size={64} className="mx-auto text-orange-500 mb-6 animate-pulse" />
+                                <h3 className="text-3xl font-bold text-gray-800 mb-4">Connect with Spotify</h3>
+                                <p className="text-gray-600 mb-6 text-lg">Login to Spotify to create personalized playlists for your business</p>
+                                <button
+                                    onClick={() => signIn("spotify")}
+                                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg"
+                                >
+                                    🎵 Login to Spotify
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Tabs */}
+                                <div className="mb-8">
+                                    <div className="mobile-tabs-container flex space-x-2 bg-white/60 backdrop-blur-sm p-2 rounded-2xl shadow-lg border border-indigo-100">
+                                        <div className="mobile-tabs-flex flex space-x-2">
+                                            {tabs.map((tab) => (
+                                                <button
+                                                    key={tab.id}
+                                                    onClick={() => setActiveTab(tab.id)}
+                                                    className={`mobile-tab-button flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                                                        activeTab === tab.id 
+                                                            ? 'bg-white text-indigo-600 shadow-lg border border-indigo-200 transform scale-105' 
+                                                            : 'text-gray-600 hover:text-indigo-500 hover:bg-indigo-50'
+                                                    }`}
+                                                >
+                                                    {tab.icon}
+                                                    <span className="ml-2">{tab.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {activeTab === 'analyzer' && (
+                                        <QuestionWizard
+                                            analysisStep={analysisStep}
+                                            setAnalysisStep={setAnalysisStep}
+                                            brandData={brandData}
+                                            setBrandData={setBrandData}
+                                            onAnalyze={() => {
+                                                calculateBrandFit();
+                                                setActiveTab('results');
+                                            }}
+                                        />
+                                    )}
+
+                                    {activeTab === 'visual' && (
+                                        <VisualAnalysis
+                                            uploadedImages={uploadedImages}
+                                            setUploadedImages={setUploadedImages}
+                                            websiteScreenshot={websiteScreenshot}
+                                            setWebsiteScreenshot={setWebsiteScreenshot}
+                                            websiteAnalysis={websiteAnalysis}
+                                            setWebsiteAnalysis={setWebsiteAnalysis}
+                                            isAnalyzingScreenshot={isAnalyzingScreenshot}
+                                            setIsAnalyzingScreenshot={setIsAnalyzingScreenshot}
+                                            fileInputRef={fileInputRef}
+                                            screenshotInputRef={screenshotInputRef}
+                                            menuImages={menuImages}
+                                            setMenuImages={setMenuImages}
+                                            menuAnalysis={menuAnalysis}
+                                            setMenuAnalysis={setMenuAnalysis}
+                                            isAnalyzingMenu={isAnalyzingMenu}
+                                            setIsAnalyzingMenu={setIsAnalyzingMenu}
+                                            brandData={brandData}
+                                            onReanalyze={() => {
+                                                calculateBrandFit();
+                                                setActiveTab('results');
+                                            }}
+                                        />
+                                    )}
+
+                                    {activeTab === 'results' && (
+                                        <EnhancedResultsPanel
+                                            analysisResults={analysisResults}
+                                            spotifyPlaylist={spotifyPlaylist}
+                                            isGeneratingPlaylist={isGeneratingPlaylist}
+                                            onGeneratePlaylist={generateSpotifyPlaylist}
+                                            databaseStats={databaseStats}
+                                            playlistMethod={playlistMethod}
+                                            brandData={brandData}
+                                            status={status}
+                                        />
+                                    )}
+
+                                    {activeTab === 'database' && (
+                                        <EnhancedResearchDatabase
+                                            databaseStats={databaseStats}
+                                            onRefreshDatabase={loadEnrichedDatabaseData}
+                                            isLoading={isLoadingDatabase}
+                                        />
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
-                    <p className="text-sm text-red-700">
-                        <strong>Science-based filtering:</strong> These genres will be excluded from your optimized playlist
-                    </p>
-                </div>
-            )}
-
-            {/* Tabs */}
-            <div className="mb-8">
-                <div className="flex space-x-2 bg-white/60 backdrop-blur-sm p-2 rounded-2xl shadow-lg border border-indigo-100">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                                activeTab === tab.id 
-                                    ? 'bg-white text-indigo-600 shadow-lg border border-indigo-200 transform scale-105' 
-                                    : 'text-gray-600 hover:text-indigo-500 hover:bg-indigo-50'
-                            }`}
-                        >
-                            {tab.icon}
-                            <span className="ml-2">{tab.label}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                {activeTab === 'analyzer' && (
-                    <QuestionWizard
-                        analysisStep={analysisStep}
-                        setAnalysisStep={setAnalysisStep}
-                        brandData={brandData}
-                        setBrandData={setBrandData}
-                        onAnalyze={() => {
-                            calculateBrandFit();
-                            setActiveTab('results');
-                        }}
-                    />
-                )}
-
-                {activeTab === 'visual' && (
-                    <VisualAnalysis
-                        uploadedImages={uploadedImages}
-                        setUploadedImages={setUploadedImages}
-                        websiteScreenshot={websiteScreenshot}
-                        setWebsiteScreenshot={setWebsiteScreenshot}
-                        websiteAnalysis={websiteAnalysis}
-                        setWebsiteAnalysis={setWebsiteAnalysis}
-                        isAnalyzingScreenshot={isAnalyzingScreenshot}
-                        setIsAnalyzingScreenshot={setIsAnalyzingScreenshot}
-                        fileInputRef={fileInputRef}
-                        screenshotInputRef={screenshotInputRef}
-                        menuImages={menuImages}
-                        setMenuImages={setMenuImages}
-                        menuAnalysis={menuAnalysis}
-                        setMenuAnalysis={setMenuAnalysis}
-                        isAnalyzingMenu={isAnalyzingMenu}
-                        setIsAnalyzingMenu={setIsAnalyzingMenu}
-                        brandData={brandData}
-                        onReanalyze={() => {
-                            calculateBrandFit();
-                            setActiveTab('results');
-                        }}
-                    />
-                )}
-
-                {activeTab === 'results' && (
-                    <EnhancedResultsPanel
-                        analysisResults={analysisResults}
-                        spotifyPlaylist={spotifyPlaylist}
-                        isGeneratingPlaylist={isGeneratingPlaylist}
-                        onGeneratePlaylist={generateSpotifyPlaylist}
-                        databaseStats={databaseStats}
-                        playlistMethod={playlistMethod}
-                        brandData={brandData}
-                    />
-                )}
-
-                {activeTab === 'database' && (
-                    <EnhancedResearchDatabase
-                        databaseStats={databaseStats}
-                        onRefreshDatabase={loadEnrichedDatabaseData}
-                        isLoading={isLoadingDatabase}
-                    />
-                )}
-            </div>
-        </div>
-    );
-}
+                );
+            }
 
 // Enhanced Results Panel
 function EnhancedResultsPanel({
@@ -365,7 +384,8 @@ function EnhancedResultsPanel({
     onGeneratePlaylist,
     databaseStats,
     playlistMethod,
-    brandData
+    brandData,
+    status  
 }) {
     if (!analysisResults) {
         return (
@@ -541,26 +561,38 @@ function EnhancedResultsPanel({
                 </div>
             )}
 
-            {/* Generate Playlist Button */}
+{/* Generate Playlist Button */}
             <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
-                <button
-                    onClick={onGeneratePlaylist}
-                    disabled={isGeneratingPlaylist}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-orange-500 hover:from-indigo-700 hover:to-orange-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg"
-                >
-                    {isGeneratingPlaylist ? (
-                        <span className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                            <Rocket className="mr-2 animate-bounce" size={20} />
-                            Launching Scientific Playlist ({playlistMethod})...
-                        </span>
-                    ) : (
+                {status === "unauthenticated" ? (
+                    <button
+                        onClick={() => signIn("spotify")}
+                        className="w-full bg-gradient-to-r from-green-600 to-blue-500 hover:from-green-700 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg"
+                    >
                         <span className="flex items-center justify-center">
                             <Rocket className="mr-3" size={24} />
-                            🚀 Launch Scientific Playlist ({playlistMethod === 'database' ? 'Database-First' : 'Live API'})
+                            🎵 Login to Spotify First
                         </span>
-                    )}
-                </button>
+                    </button>
+                ) : (
+                    <button
+                        onClick={onGeneratePlaylist}
+                        disabled={isGeneratingPlaylist}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-orange-500 hover:from-indigo-700 hover:to-orange-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg"
+                    >
+                        {isGeneratingPlaylist ? (
+                            <span className="flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                                <Rocket className="mr-2 animate-bounce" size={20} />
+                                Launching Scientific Playlist ({playlistMethod})...
+                            </span>
+                        ) : (
+                            <span className="flex items-center justify-center">
+                                <Rocket className="mr-3" size={24} />
+                                🚀 Launch Scientific Playlist ({playlistMethod === 'database' ? 'Database-First' : 'Live API'})
+                            </span>
+                        )}
+                    </button>
+                )}
 
                 {brandData.q8 && brandData.q8.length > 0 && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">

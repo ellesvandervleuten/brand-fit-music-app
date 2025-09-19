@@ -63,3 +63,27 @@ html, body {
     width: 100%;
   }
 }
+
+/* Mobile tabs horizontal scroll fix */
+@media (max-width: 768px) {
+  .mobile-tabs-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  
+  .mobile-tabs-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+  
+  .mobile-tabs-flex {
+    min-width: max-content;
+    padding-right: 20px; /* Extra ruimte rechts voor scroll indicatie */
+  }
+  
+  .mobile-tab-button {
+    flex-shrink: 0; /* Voorkom dat tabs krimpen */
+    white-space: nowrap;
+  }
+}
