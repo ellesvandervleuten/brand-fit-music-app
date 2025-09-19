@@ -22,5 +22,10 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Ambit, Helvetica, sans-serif;
+}
+
+/* Alleen deze kleine toevoeging voor RocketScience glow effect */
+.rocket-glow {
+  filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.3));
 }

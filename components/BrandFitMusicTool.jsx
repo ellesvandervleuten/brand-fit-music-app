@@ -1,13 +1,13 @@
-// components/BrandFitMusicTool.jsx - Updated with Database Integration + Excluded Genres
+
+// components/BrandFitMusicTool.jsx - RocketScience met standaard Tailwind
 import React, { useState, useEffect, useRef } from 'react';
-import { Brain, Camera as CameraIcon, BarChart3, Beaker, Database } from 'lucide-react';
+import { Brain, Camera as CameraIcon, BarChart3, Beaker, Database, Rocket } from 'lucide-react';
 import { useSession, signIn } from 'next-auth/react';
 
 import QuestionWizard from './tabs/QuestionWizard';
 import VisualAnalysis from './tabs/VisualAnalysis';
 import ResultsPanel from './tabs/ResultsPanel';
 import ResearchDatabase from './tabs/ResearchDatabase';
-
 
 import {
     loadTop2000Database,
@@ -36,11 +36,11 @@ export default function BrandFitMusicTool() {
     const [menuAnalysis, setMenuAnalysis] = useState(null);
     const [isAnalyzingMenu, setIsAnalyzingMenu] = useState(false);
 
-    // NEW: Database integration state
+    // Database integration state
     const [enrichedDatabase, setEnrichedDatabase] = useState(null);
     const [databaseStats, setDatabaseStats] = useState(null);
     const [isLoadingDatabase, setIsLoadingDatabase] = useState(false);
-    const [playlistMethod, setPlaylistMethod] = useState('database'); // 'database' or 'spotify_api'
+    const [playlistMethod, setPlaylistMethod] = useState('database');
 
     const [top2000Database, setTop2000Database] = useState(null);
 
@@ -52,16 +52,12 @@ export default function BrandFitMusicTool() {
     // Load databases on mount
     useEffect(() => {
         (async () => {
-            // Load original database
             const data = await loadTop2000Database();
             setTop2000Database(data || []);
-
-            // Load enriched database
             await loadEnrichedDatabaseData();
         })();
     }, []);
 
-    // NEW: Load enriched database
     const loadEnrichedDatabaseData = async () => {
         setIsLoadingDatabase(true);
         try {
@@ -93,7 +89,6 @@ export default function BrandFitMusicTool() {
         setAnalysisResults({ music_profile, roi_projection, implementation_plan });
     };
 
-    // UPDATED: Generate playlist with database or Spotify API + EXCLUDED GENRES
     const generateSpotifyPlaylist = async () => {
         if (!analysisResults) return;
         if (status !== 'authenticated') return signIn('spotify');
@@ -102,7 +97,6 @@ export default function BrandFitMusicTool() {
         try {
             const { music_profile } = analysisResults;
 
-            // Choose API endpoint based on method
             const apiEndpoint = playlistMethod === 'database'
                 ? '/api/create_playlist_database'
                 : '/api/create_playlist';
@@ -113,9 +107,9 @@ export default function BrandFitMusicTool() {
                 cultural_genres: music_profile.cultural_context?.cultural_genres || [],
                 cultural_context: music_profile.cultural_context || null,
                 year_preferences: music_profile.year_preferences || null,
-                excluded_genres: brandData.q8 || [], // FIXED: q8 instead of q7
+                excluded_genres: brandData.q8 || [],
                 operational_goal: music_profile.operational_goal || 'balanced_operation',
-                playlistName: `Scientific Brand-Fit Playlist (${playlistMethod === 'database' ? 'Database' : 'Live API'})`,
+                playlistName: `🚀 RocketScience Brand-Fit Playlist (${playlistMethod === 'database' ? 'Database' : 'Live API'})`,
                 playlistDescription: `Generated using ${playlistMethod === 'database' ? 'database-first' : 'features-first'} scientific approach`,
             };
 
@@ -152,7 +146,7 @@ export default function BrandFitMusicTool() {
             }));
 
             setSpotifyPlaylist({
-                name: data.playlist?.name || 'Scientific Brand-Fit Playlist',
+                name: data.playlist?.name || '🚀 RocketScience Brand-Fit Playlist',
                 description: data.playlist?.description || 'Features-first scientific approach',
                 tracks,
                 match_score: data.meta?.match_quality || calculateMatchScore(music_profile.features, tracks, top2000Database),
@@ -184,24 +178,33 @@ export default function BrandFitMusicTool() {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto p-6 bg-gradient-to-br from-indigo-50 via-white to-orange-50 min-h-screen">
+            {/* Header - RocketScience Styling */}
             <div className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Scientific Brand-Fit Music Tool</h1>
-                <p className="text-gray-600 text-lg">
+                <div className="flex items-center justify-center mb-4">
+                    <Rocket className="h-12 w-12 text-orange-500 mr-4 drop-shadow-lg animate-pulse" />
+                    <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-indigo-600 to-orange-600 bg-clip-text text-transparent">
+                        RocketScience Music Tool
+                    </h1>
+                </div>
+                <p className="text-center text-gray-700 text-lg mb-4">
                     Database-First AI-Powered Music Optimization for Hospitality Business
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                    <div className="px-4 py-2 bg-green-100 text-green-800 rounded-lg inline-block">
+                <div className="flex justify-center flex-wrap gap-2">
+                    <div className="px-4 py-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 rounded-full border border-indigo-200 inline-flex items-center shadow-sm font-medium">
+                        <Beaker size={16} className="mr-2" />
                         🗄️ Database-First Scientific Approach
                     </div>
                     {databaseStats && (
-                        <div className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg inline-block">
+                        <div className="px-4 py-2 bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 rounded-full border border-orange-200 inline-flex items-center shadow-sm font-medium">
+                            <BarChart3 size={16} className="mr-2" />
                             📊 {databaseStats.total_tracks} tracks • {databaseStats.coverage_percentage}% enriched
                         </div>
                     )}
                     {isLoadingDatabase && (
-                        <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg inline-block">
-                            ⏳ Loading database...
+                        <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full inline-flex items-center shadow-sm">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2"></div>
+                            Loading research database...
                         </div>
                     )}
                 </div>
@@ -209,64 +212,79 @@ export default function BrandFitMusicTool() {
 
             {/* Method Selection */}
             {analysisResults && (
-                <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
-                    <h3 className="text-lg font-semibold mb-3">📡 Playlist Generation Method</h3>
-                    <div className="flex gap-4">
-                        <label className="flex items-center space-x-2">
-                            <input
-                                type="radio"
-                                value="database"
-                                checked={playlistMethod === 'database'}
-                                onChange={(e) => setPlaylistMethod(e.target.value)}
-                                className="text-blue-600"
-                            />
-                            <span className="font-medium">Database-First</span>
-                            <span className="text-sm text-gray-600">
-                                (Uses enriched local database - {databaseStats?.total_tracks || 0} tracks)
-                            </span>
+                <div className="mb-6 bg-gradient-to-r from-indigo-50 to-orange-50 p-6 rounded-2xl border border-indigo-200 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
+                        <Rocket size={20} className="mr-2 text-orange-500" />
+                        🚀 Playlist Generation Method
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <label className="bg-white p-4 rounded-xl border border-indigo-200 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all">
+                            <div className="flex items-center space-x-3">
+                                <input
+                                    type="radio"
+                                    value="database"
+                                    checked={playlistMethod === 'database'}
+                                    onChange={(e) => setPlaylistMethod(e.target.value)}
+                                    className="text-indigo-600 w-4 h-4"
+                                />
+                                <div>
+                                    <span className="font-bold text-indigo-700">🗄️ Database-First</span>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Uses enriched research database - {databaseStats?.total_tracks || 0} tracks
+                                    </p>
+                                </div>
+                            </div>
                         </label>
-                        <label className="flex items-center space-x-2">
-                            <input
-                                type="radio"
-                                value="spotify_api"
-                                checked={playlistMethod === 'spotify_api'}
-                                onChange={(e) => setPlaylistMethod(e.target.value)}
-                                className="text-blue-600"
-                            />
-                            <span className="font-medium">Spotify API</span>
-                            <span className="text-sm text-gray-600">
-                                (Live API with feature estimation fallback)
-                            </span>
+                        <label className="bg-white p-4 rounded-xl border border-indigo-200 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all">
+                            <div className="flex items-center space-x-3">
+                                <input
+                                    type="radio"
+                                    value="spotify_api"
+                                    checked={playlistMethod === 'spotify_api'}
+                                    onChange={(e) => setPlaylistMethod(e.target.value)}
+                                    className="text-indigo-600 w-4 h-4"
+                                />
+                                <div>
+                                    <span className="font-bold text-indigo-700">⚡ Spotify API</span>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Live API with feature estimation fallback
+                                    </p>
+                                </div>
+                            </div>
                         </label>
                     </div>
                 </div>
             )}
 
-            {/* FIXED: Exclusion Preview - q8 instead of q7 */}
+            {/* Exclusion Preview */}
             {analysisResults && brandData.q8 && brandData.q8.length > 0 && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2 text-red-800">🚫 Excluded Genres</h3>
-                    <div className="flex flex-wrap gap-2">
+                <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl">
+                    <h3 className="text-lg font-bold mb-2 text-red-800">🚫 Excluded Genres</h3>
+                    <div className="flex flex-wrap gap-2 mb-3">
                         {brandData.q8.map((genre, i) => (
-                            <span key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                            <span key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
                                 {genre.replace('_', ' ')}
                             </span>
                         ))}
                     </div>
-                    <p className="text-sm text-red-600 mt-2">
-                        These genres will be filtered out from your playlist
+                    <p className="text-sm text-red-700">
+                        <strong>Science-based filtering:</strong> These genres will be excluded from your optimized playlist
                     </p>
                 </div>
             )}
 
+            {/* Tabs */}
             <div className="mb-8">
-                <div className="flex space-x-1 bg-gray-200 p-1 rounded-lg">
+                <div className="flex space-x-2 bg-white/60 backdrop-blur-sm p-2 rounded-2xl shadow-lg border border-indigo-100">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center px-4 py-2 rounded-md font-medium transition-all ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                                }`}
+                            className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                                activeTab === tab.id 
+                                    ? 'bg-white text-indigo-600 shadow-lg border border-indigo-200 transform scale-105' 
+                                    : 'text-gray-600 hover:text-indigo-500 hover:bg-indigo-50'
+                            }`}
                         >
                             {tab.icon}
                             <span className="ml-2">{tab.label}</span>
@@ -323,7 +341,7 @@ export default function BrandFitMusicTool() {
                         onGeneratePlaylist={generateSpotifyPlaylist}
                         databaseStats={databaseStats}
                         playlistMethod={playlistMethod}
-                        brandData={brandData} // NIEUW: Pass brandData voor exclusion display
+                        brandData={brandData}
                     />
                 )}
 
@@ -339,7 +357,7 @@ export default function BrandFitMusicTool() {
     );
 }
 
-// Enhanced Results Panel with database info + exclusion display
+// Enhanced Results Panel
 function EnhancedResultsPanel({
     analysisResults,
     spotifyPlaylist,
@@ -347,14 +365,14 @@ function EnhancedResultsPanel({
     onGeneratePlaylist,
     databaseStats,
     playlistMethod,
-    brandData // NIEUW: Voor exclusion display
+    brandData
 }) {
     if (!analysisResults) {
         return (
-            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-                <BarChart3 size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-600 mb-2">No Analysis Results</h3>
-                <p className="text-gray-500">Complete the business analyzer to see your scientific music profile.</p>
+            <div className="bg-white p-8 rounded-2xl shadow-lg text-center border border-indigo-200">
+                <Rocket size={64} className="mx-auto text-indigo-400 mb-4 drop-shadow-lg animate-pulse" />
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Ready for Launch</h3>
+                <p className="text-gray-600">Complete the business analysis to generate your science-based music profile.</p>
             </div>
         );
     }
@@ -364,47 +382,87 @@ function EnhancedResultsPanel({
     return (
         <div className="space-y-6">
             {/* Scientific Music Profile */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="text-xl font-bold mb-4">🧪 Scientific Music Profile</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 className="font-semibold mb-3">Target Audio Features</h4>
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <span>Tempo:</span>
-                                <span className="font-mono">{music_profile.features.tempo} BPM</span>
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
+                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+                    <Beaker size={28} className="mr-3 text-orange-500" />
+                    🧪 Scientific Music Profile
+                </h3>
+                <div className="grid lg:grid-cols-2 gap-8">
+                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200">
+                        <h4 className="font-bold mb-4 text-gray-800 flex items-center">
+                            <BarChart3 size={20} className="mr-2 text-indigo-500" />
+                            Target Audio Features
+                        </h4>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700">Tempo:</span>
+                                <span className="font-mono text-lg font-bold text-indigo-600">{music_profile.features.tempo} BPM</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Energy:</span>
-                                <span className="font-mono">{(music_profile.features.energy * 10).toFixed(1)}/10</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700">Energy:</span>
+                                <div className="flex items-center">
+                                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div 
+                                            className="h-2 bg-gradient-to-r from-indigo-500 to-orange-500 rounded-full"
+                                            style={{width: `${music_profile.features.energy * 100}%`}}
+                                        ></div>
+                                    </div>
+                                    <span className="font-mono font-bold text-indigo-600">
+                                        {(music_profile.features.energy * 10).toFixed(1)}/10
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Acousticness:</span>
-                                <span className="font-mono">{(music_profile.features.acousticness * 10).toFixed(1)}/10</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700">Acousticness:</span>
+                                <div className="flex items-center">
+                                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div 
+                                            className="h-2 bg-gradient-to-r from-indigo-500 to-orange-500 rounded-full"
+                                            style={{width: `${music_profile.features.acousticness * 100}%`}}
+                                        ></div>
+                                    </div>
+                                    <span className="font-mono font-bold text-indigo-600">
+                                        {(music_profile.features.acousticness * 10).toFixed(1)}/10
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Danceability:</span>
-                                <span className="font-mono">{(music_profile.features.danceability * 10).toFixed(1)}/10</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700">Danceability:</span>
+                                <div className="flex items-center">
+                                    <div className="w-20 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div 
+                                            className="h-2 bg-gradient-to-r from-indigo-500 to-orange-500 rounded-full"
+                                            style={{width: `${music_profile.features.danceability * 100}%`}}
+                                        ></div>
+                                    </div>
+                                    <span className="font-mono font-bold text-indigo-600">
+                                        {(music_profile.features.danceability * 10).toFixed(1)}/10
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <h4 className="font-semibold mb-3">Secondary Genres</h4>
-                        <div className="flex flex-wrap gap-2">
+                    
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-xl border border-orange-200">
+                        <h4 className="font-bold mb-4 text-gray-800 flex items-center">
+                            <Database size={20} className="mr-2 text-orange-500" />
+                            Secondary Genres
+                        </h4>
+                        <div className="flex flex-wrap gap-2 mb-4">
                             {music_profile.secondary_genres?.map((genre, i) => (
-                                <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                <span key={i} className="px-3 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold border border-indigo-200">
                                     {genre}
                                 </span>
                             ))}
                         </div>
 
-                        {/* FIXED: Show excluded genres in results - q8 instead of q7 */}
+                        {/* Show excluded genres */}
                         {brandData.q8 && brandData.q8.length > 0 && (
                             <div className="mt-4">
-                                <h4 className="font-semibold mb-2 text-red-600">Excluded Genres</h4>
+                                <h4 className="font-bold mb-2 text-red-600">Excluded Genres</h4>
                                 <div className="flex flex-wrap gap-2">
                                     {brandData.q8.map((genre, i) => (
-                                        <span key={i} className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                                        <span key={i} className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                                             🚫 {genre.replace('_', ' ')}
                                         </span>
                                     ))}
@@ -414,25 +472,25 @@ function EnhancedResultsPanel({
                     </div>
                 </div>
 
-                {/* NIEUW: Cultural Context Display */}
+                {/* Cultural Context */}
                 {music_profile.cultural_context && (
-                    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-                        <h4 className="font-semibold text-purple-800 mb-2">🌍 Cultural Context</h4>
+                    <div className="mt-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
+                        <h4 className="font-bold text-purple-800 mb-3">🌍 Cultural Intelligence</h4>
                         <div className="grid md:grid-cols-2 gap-4 text-sm">
                             <div>
-                                <span className="font-medium">Detected Culture:</span>
-                                <span className="ml-2 capitalize">{music_profile.cultural_context.detected_culture}</span>
+                                <span className="font-medium text-gray-700">Detected Culture:</span>
+                                <span className="ml-2 capitalize font-bold text-purple-700">{music_profile.cultural_context.detected_culture}</span>
                             </div>
                             <div>
-                                <span className="font-medium">Confidence:</span>
-                                <span className="ml-2">{music_profile.cultural_context.cultural_confidence}</span>
+                                <span className="font-medium text-gray-700">Confidence:</span>
+                                <span className="ml-2 font-bold text-purple-700">{music_profile.cultural_context.cultural_confidence}</span>
                             </div>
                         </div>
-                        <div className="mt-2">
-                            <span className="font-medium text-sm">Cultural Genres:</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="mt-3">
+                            <span className="font-medium text-sm text-gray-700">Cultural Genres:</span>
+                            <div className="flex flex-wrap gap-1 mt-2">
                                 {music_profile.cultural_context.cultural_genres?.map((genre, i) => (
-                                    <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                    <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                                         {genre}
                                     </span>
                                 ))}
@@ -441,16 +499,18 @@ function EnhancedResultsPanel({
                     </div>
                 )}
 
-                {/* NIEUW: Demographic Influence Display */}
+                {/* Demographics */}
                 {music_profile.year_preferences && music_profile.year_preferences.demographic_influence && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <h4 className="font-semibold text-blue-800 mb-2">👥 Demographics</h4>
-                        <div className="text-sm text-blue-700">
-                            <div className="mb-1">
-                                <span className="font-medium">Target Groups:</span> {music_profile.year_preferences.demographic_influence}
+                    <div className="mt-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                        <h4 className="font-bold text-blue-800 mb-3">👥 Demographic Targeting</h4>
+                        <div className="text-sm">
+                            <div className="mb-2">
+                                <span className="font-medium text-gray-700">Target Groups:</span>
+                                <span className="ml-2 font-bold text-blue-700">{music_profile.year_preferences.demographic_influence}</span>
                             </div>
                             <div>
-                                <span className="font-medium">Music Era:</span> {music_profile.year_preferences.description}
+                                <span className="font-medium text-gray-700">Music Era:</span>
+                                <span className="ml-2 font-bold text-blue-700">{music_profile.year_preferences.description}</span>
                             </div>
                         </div>
                     </div>
@@ -459,151 +519,181 @@ function EnhancedResultsPanel({
 
             {/* Database Statistics */}
             {databaseStats && (
-                <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 className="text-xl font-bold mb-4">📊 Database Coverage</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">{databaseStats.total_tracks}</div>
-                            <div className="text-sm text-gray-600">Total Tracks</div>
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
+                    <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                        <Database size={24} className="mr-3 text-indigo-500" />
+                        📊 Research Database Coverage
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200">
+                            <div className="text-3xl font-bold text-indigo-600 mb-2">{databaseStats.total_tracks}</div>
+                            <div className="text-sm text-gray-600 font-medium">Total Research Tracks</div>
                         </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">{databaseStats.with_spotify_data}</div>
-                            <div className="text-sm text-gray-600">Enriched Tracks</div>
+                        <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                            <div className="text-3xl font-bold text-orange-600 mb-2">{databaseStats.with_spotify_data}</div>
+                            <div className="text-sm text-gray-600 font-medium">Enriched Tracks</div>
                         </div>
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">{databaseStats.coverage_percentage}%</div>
-                            <div className="text-sm text-gray-600">Coverage</div>
+                        <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                            <div className="text-3xl font-bold text-green-600 mb-2">{databaseStats.coverage_percentage}%</div>
+                            <div className="text-sm text-gray-600 font-medium">Database Coverage</div>
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Generate Playlist Button */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
                 <button
                     onClick={onGeneratePlaylist}
                     disabled={isGeneratingPlaylist}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-orange-500 hover:from-indigo-700 hover:to-orange-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-lg"
                 >
                     {isGeneratingPlaylist ? (
                         <span className="flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                            Generating Playlist ({playlistMethod})...
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                            <Rocket className="mr-2 animate-bounce" size={20} />
+                            Launching Scientific Playlist ({playlistMethod})...
                         </span>
                     ) : (
-                        `🎵 Generate Scientific Playlist (${playlistMethod === 'database' ? 'Database' : 'Live API'})`
+                        <span className="flex items-center justify-center">
+                            <Rocket className="mr-3" size={24} />
+                            🚀 Launch Scientific Playlist ({playlistMethod === 'database' ? 'Database-First' : 'Live API'})
+                        </span>
                     )}
                 </button>
 
-                {/* FIXED: Preview van wat er uitgesloten wordt - q8 instead of q7 */}
                 {brandData.q8 && brandData.q8.length > 0 && (
-                    <div className="mt-3 p-3 bg-red-50 rounded text-sm text-red-700">
-                        <strong>Note:</strong> Excluding {brandData.q8.length} genre{brandData.q8.length > 1 ? 's' : ''} from playlist generation
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center text-sm">
+                            <Database size={16} className="mr-2 text-red-600" />
+                            <strong className="text-red-800">Science-based filtering:</strong>
+                            <span className="ml-2 text-red-700">
+                                Excluding {brandData.q8.length} genre{brandData.q8.length > 1 ? 's' : ''} from optimization
+                            </span>
+                        </div>
                     </div>
                 )}
             </div>
 
             {/* Playlist Results */}
             {spotifyPlaylist && (
-                <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 className="text-xl font-bold mb-4">🎵 Generated Playlist</h3>
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
+                    <h3 className="text-2xl font-bold mb-4 text-gray-800 flex items-center">
+                        <BarChart3 size={28} className="mr-3 text-orange-500" />
+                        🎵 Generated RocketScience Playlist
+                    </h3>
 
-                    {/* Playlist Info */}
-                    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold">{spotifyPlaylist.name}</h4>
+                    <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-orange-50 rounded-xl border border-indigo-200">
+                        <div className="flex justify-between items-start mb-3">
+                            <h4 className="font-bold text-lg text-gray-800">{spotifyPlaylist.name}</h4>
                             {spotifyPlaylist.url && (
                                 <a
                                     href={spotifyPlaylist.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700 font-medium"
+                                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md hover:shadow-lg"
                                 >
-                                    Open in Spotify →
+                                    🚀 Launch in Spotify →
                                 </a>
                             )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">{spotifyPlaylist.note}</p>
+                        <p className="text-sm text-gray-600 mb-4">{spotifyPlaylist.note}</p>
 
-                        {/* Database-specific info */}
                         {spotifyPlaylist.database_info && (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                <div>
-                                    <span className="font-medium">Found:</span> {spotifyPlaylist.database_info.total_tracks_found}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                                <div className="text-center p-3 bg-white/70 rounded-lg">
+                                    <div className="font-bold text-indigo-600 text-lg">{spotifyPlaylist.database_info.total_tracks_found}</div>
+                                    <div className="text-xs text-gray-600">Found</div>
                                 </div>
-                                <div>
-                                    <span className="font-medium">In Spotify:</span> {spotifyPlaylist.database_info.spotify_tracks_in_playlist}
+                                <div className="text-center p-3 bg-white/70 rounded-lg">
+                                    <div className="font-bold text-orange-600 text-lg">{spotifyPlaylist.database_info.spotify_tracks_in_playlist}</div>
+                                    <div className="text-xs text-gray-600">In Spotify</div>
                                 </div>
-                                <div>
-                                    <span className="font-medium">Research:</span> {spotifyPlaylist.database_info.research_tracks_found}
+                                <div className="text-center p-3 bg-white/70 rounded-lg">
+                                    <div className="font-bold text-green-600 text-lg">{spotifyPlaylist.database_info.research_tracks_found}</div>
+                                    <div className="text-xs text-gray-600">Research</div>
                                 </div>
-                                <div>
-                                    <span className="font-medium">Match:</span> {spotifyPlaylist.match_score}%
+                                <div className="text-center p-3 bg-white/70 rounded-lg">
+                                    <div className="font-bold text-purple-600 text-lg">{spotifyPlaylist.match_score}%</div>
+                                    <div className="text-xs text-gray-600">Match</div>
                                 </div>
                             </div>
                         )}
 
-                        {/* FIXED: Show filtering impact - q8 instead of q7 */}
+                        {/* Filtering Pipeline */}
                         {spotifyPlaylist.meta && spotifyPlaylist.meta.filtering_results && (
-                            <div className="mt-3 p-3 bg-blue-50 rounded">
-                                <h5 className="font-medium text-blue-800 mb-2">Filtering Pipeline:</h5>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-blue-700">
+                            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <h5 className="font-medium text-blue-800 mb-2 flex items-center">
+                                    <Beaker size={16} className="mr-2" />
+                                    Scientific Filtering Pipeline:
+                                </h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                                     {spotifyPlaylist.meta.filtering_results.year_filtering && (
-                                        <div>Year Filter: -{spotifyPlaylist.meta.filtering_results.year_filtering.removed}</div>
+                                        <div className="bg-blue-100 px-2 py-1 rounded text-blue-700">
+                                            Year Filter: -{spotifyPlaylist.meta.filtering_results.year_filtering.removed}
+                                        </div>
                                     )}
                                     {spotifyPlaylist.meta.filtering_results.cultural_genre_search && (
-                                        <div>Cultural: {spotifyPlaylist.meta.filtering_results.cultural_genre_search}</div>
+                                        <div className="bg-blue-100 px-2 py-1 rounded text-blue-700">
+                                            Cultural: {spotifyPlaylist.meta.filtering_results.cultural_genre_search}
+                                        </div>
                                     )}
                                     {brandData.q8 && brandData.q8.length > 0 && (
-                                        <div>Exclusions: {brandData.q8.length} blocked</div>
+                                        <div className="bg-red-100 px-2 py-1 rounded text-red-700">
+                                            Exclusions: {brandData.q8.length} blocked
+                                        </div>
                                     )}
-                                    <div>Final: {spotifyPlaylist.tracks.length}</div>
+                                    <div className="bg-green-100 px-2 py-1 rounded text-green-700">
+                                        Final: {spotifyPlaylist.tracks.length} tracks
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Track List */}
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
                         <table className="w-full text-sm">
-                            <thead className="bg-gray-50 sticky top-0">
+                            <thead className="bg-indigo-50 sticky top-0">
                                 <tr>
-                                    <th className="text-left p-2">Track</th>
-                                    <th className="text-left p-2">BPM</th>
-                                    <th className="text-left p-2">Energy</th>
-                                    <th className="text-left p-2">Year</th>
-                                    <th className="text-left p-2">Match</th>
-                                    <th className="text-left p-2">Source</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">Track</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">BPM</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">Energy</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">Year</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">Match</th>
+                                    <th className="text-left p-3 font-bold text-indigo-700">Source</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="bg-white">
                                 {spotifyPlaylist.tracks.map((track, i) => (
-                                    <tr key={i} className="border-b">
-                                        <td className="p-2">
+                                    <tr key={i} className="border-b border-gray-100 hover:bg-indigo-25 transition-colors">
+                                        <td className="p-3">
                                             <div>
-                                                <div className="font-medium">{track.name}</div>
-                                                <div className="text-gray-500">{track.artist}</div>
+                                                <div className="font-medium text-gray-800">{track.name}</div>
+                                                <div className="text-gray-500 text-xs">{track.artist}</div>
                                             </div>
                                         </td>
-                                        <td className="p-2 font-mono">{Math.round(track.bpm)}</td>
-                                        <td className="p-2 font-mono">{(track.energy * 10).toFixed(1)}</td>
-                                        <td className="p-2 font-mono text-xs">
+                                        <td className="p-3 font-mono font-medium">{Math.round(track.bpm)}</td>
+                                        <td className="p-3 font-mono font-medium">{(track.energy * 10).toFixed(1)}</td>
+                                        <td className="p-3 font-mono text-xs">
                                             {track.year || 'N/A'}
                                             {track.year >= 2020 && <span className="text-green-600 ml-1">🆕</span>}
                                         </td>
-                                        <td className="p-2">
-                                            <span className={`px-2 py-1 rounded text-xs ${(track.match_score || 0) > 0.8 ? 'bg-green-100 text-green-800' :
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                (track.match_score || 0) > 0.8 ? 'bg-green-100 text-green-800' :
                                                 (track.match_score || 0) > 0.6 ? 'bg-yellow-100 text-yellow-800' :
-                                                    'bg-red-100 text-red-800'
-                                                }`}>
+                                                'bg-red-100 text-red-800'
+                                            }`}>
                                                 {Math.round((track.match_score || 0) * 100)}%
                                             </span>
                                             {track.cultural_match && <span className="text-purple-600 ml-1 text-xs">🌍</span>}
                                         </td>
-                                        <td className="p-2">
-                                            <span className={`px-2 py-1 rounded text-xs ${track.has_spotify_data ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {track.has_spotify_data ? 'Spotify' : 'Estimated'}
+                                        <td className="p-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                track.has_spotify_data ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {track.has_spotify_data ? '🎵 Spotify' : '🧮 Estimated'}
                                             </span>
                                         </td>
                                     </tr>
@@ -616,22 +706,85 @@ function EnhancedResultsPanel({
 
             {/* ROI Projection */}
             {roi_projection && (
-                <div className="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 className="text-xl font-bold mb-4">💰 ROI Projection</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                            <div className="text-2xl font-bold text-green-600">+{roi_projection.revenue_increase}%</div>
-                            <div className="text-sm text-gray-600">Revenue Increase</div>
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
+                    <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                        <Database size={24} className="mr-3 text-orange-500" />
+                        💰 ROI Projection & Business Impact
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-6">
+                        <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
+                            <div className="text-3xl font-bold text-green-600 mb-2">+{roi_projection.revenue_increase}%</div>
+                            <div className="text-sm text-gray-600 font-medium">Revenue Increase</div>
+                            <div className="text-xs text-gray-500 mt-1">Science-based projection</div>
                         </div>
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                            <div className="text-2xl font-bold text-blue-600">{roi_projection.customer_satisfaction}%</div>
-                            <div className="text-sm text-gray-600">Satisfaction</div>
+                        <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl border border-blue-200">
+                            <div className="text-3xl font-bold text-blue-600 mb-2">{roi_projection.customer_satisfaction}%</div>
+                            <div className="text-sm text-gray-600 font-medium">Customer Satisfaction</div>
+                            <div className="text-xs text-gray-500 mt-1">Expected improvement</div>
                         </div>
-                        <div className="text-center p-4 bg-purple-50 rounded-lg">
-                            <div className="text-2xl font-bold text-purple-600">{roi_projection.implementation_time}</div>
-                            <div className="text-sm text-gray-600">Implementation</div>
+                        <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl border border-purple-200">
+                            <div className="text-2xl font-bold text-purple-600 mb-2">{roi_projection.implementation_time}</div>
+                            <div className="text-sm text-gray-600 font-medium">Implementation Time</div>
+                            <div className="text-xs text-gray-500 mt-1">Ready to launch</div>
                         </div>
                     </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Enhanced Research Database
+function EnhancedResearchDatabase({ databaseStats, onRefreshDatabase, isLoading }) {
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
+            <h3 className="text-2xl font-bold mb-4 text-gray-800 flex items-center">
+                <Database size={28} className="mr-3 text-indigo-500" />
+                🔬 Research Foundation Database
+            </h3>
+            
+            {isLoading ? (
+                <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading research database...</p>
+                </div>
+            ) : databaseStats ? (
+                <div className="space-y-6">
+                    <div className="grid md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200">
+                            <div className="text-2xl font-bold text-indigo-600">{databaseStats.total_tracks}</div>
+                            <div className="text-sm text-gray-600 font-medium">Total Tracks</div>
+                        </div>
+                        <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                            <div className="text-2xl font-bold text-orange-600">{databaseStats.with_spotify_data}</div>
+                            <div className="text-sm text-gray-600 font-medium">Enriched</div>
+                        </div>
+                        <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                            <div className="text-2xl font-bold text-green-600">{databaseStats.coverage_percentage}%</div>
+                            <div className="text-sm text-gray-600 font-medium">Coverage</div>
+                        </div>
+                        <div className="text-center p-4 bg-gradient-to-br from-indigo-50 to-purple-100 rounded-xl border border-indigo-200">
+                            <button
+                                onClick={onRefreshDatabase}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                disabled={isLoading}
+                            >
+                                🔄 Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gradient-to-r from-indigo-50 to-orange-50 rounded-xl border border-indigo-200">
+                        <p className="text-gray-700 text-sm">
+                            <strong>RocketScience Database:</strong> Our research foundation contains scientifically validated music data 
+                            optimized for hospitality environments. Each track is analyzed for business impact potential.
+                        </p>
+                    </div>
+                </div>
+            ) : (
+                <div className="text-center py-8">
+                    <Beaker size={64} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Database information not available</p>
                 </div>
             )}
         </div>

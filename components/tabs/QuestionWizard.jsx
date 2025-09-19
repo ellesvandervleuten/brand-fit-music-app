@@ -120,14 +120,54 @@ const brandQuestions = {
         subtitle: "Kies wat het beste past bij je klanten (meerdere mogelijk)",
         type: "multiple",
         options: [
-            { id: "young_adults", label: "Jongeren 18-35", icon: <Users className="mr-3 text-cyan-600" size={20} /> },
-            { id: "business_professionals", label: "Business & Professionals", icon: <Users className="mr-3 text-gray-600" size={20} /> },
-            { id: "families_groups", label: "Families & Vriendengroepen", icon: <Users className="mr-3 text-green-600" size={20} /> },
-            { id: "locals_regulars", label: "Locals & Vaste Klanten", icon: <Users className="mr-3 text-blue-600" size={20} /> },
-            { id: "seniors_mature", label: "50+ Generatie", icon: <Users className="mr-3 text-purple-600" size={20} /> },
-            { id: "tourists_visitors", label: "Toeristen & Bezoekers", icon: <Users className="mr-3 text-orange-600" size={20} /> },
-            { id: "food_enthusiasts", label: "Food Lovers", icon: <Users className="mr-3 text-red-600" size={20} /> },
-            { id: "quick_convenience", label: "Quick & Convenient", icon: <Timer className="mr-3 text-yellow-600" size={20} /> }
+            { 
+                id: "young_adults", 
+                label: "Jongeren 18-35", 
+                subtitle: "studenten, young professionals",
+                icon: <Users className="mr-3 text-cyan-600" size={20} /> 
+            },
+            { 
+                id: "business_professionals", 
+                label: "Business & Professionals", 
+                subtitle: "zakenlunch, meetings",
+                icon: <Users className="mr-3 text-gray-600" size={20} /> 
+            },
+            { 
+                id: "families_groups", 
+                label: "Families & Vriendengroepen", 
+                subtitle: "gezellig uit eten",
+                icon: <Users className="mr-3 text-green-600" size={20} /> 
+            },
+            { 
+                id: "locals_regulars", 
+                label: "Locals & Vaste Klanten", 
+                subtitle: "buurtcafé, stamgasten",
+                icon: <Users className="mr-3 text-blue-600" size={20} /> 
+            },
+            { 
+                id: "seniors_mature", 
+                label: "50+ Generatie", 
+                subtitle: "rustig, kwaliteit, comfort",
+                icon: <Users className="mr-3 text-purple-600" size={20} /> 
+            },
+            { 
+                id: "tourists_visitors", 
+                label: "Toeristen & Bezoekers", 
+                subtitle: "niet-locals",
+                icon: <Users className="mr-3 text-orange-600" size={20} /> 
+            },
+            { 
+                id: "food_enthusiasts", 
+                label: "Food Lovers", 
+                subtitle: "koken, kwaliteit, ambacht",
+                icon: <Users className="mr-3 text-red-600" size={20} /> 
+            },
+            { 
+                id: "quick_convenience", 
+                label: "Quick & Convenient", 
+                subtitle: "snel, praktisch, onderweg",
+                icon: <Timer className="mr-3 text-yellow-600" size={20} /> 
+            }
         ]
     },
     6: {
