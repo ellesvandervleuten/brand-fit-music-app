@@ -1,8 +1,8 @@
-// components/tabs/QuestionWizard.jsx - FIXED met bedrijfsdoelen
+// components/tabs/QuestionWizard.jsx - FIXED met 8 stappen incl. demographics
 import React from 'react';
 import { CheckCircle, Store, Coffee, Utensils, Wine, Clock, Users, DollarSign, Timer, BarChart3, Star } from 'lucide-react';
 
-// NIEUWE brandQuestions met bedrijfsdoelen toegevoegd
+// NIEUWE brandQuestions met demographics als stap 5
 const brandQuestions = {
     1: {
         title: "Wat is de naam van je restaurant/zaak?",
@@ -115,7 +115,22 @@ const brandQuestions = {
             }
         ]
     },
-    5: {
+    5: { // NIEUWE demographics vraag
+        title: "Wat is je hoofddoelgroep?",
+        subtitle: "Kies wat het beste past bij je klanten (meerdere mogelijk)",
+        type: "multiple",
+        options: [
+            { id: "young_adults", label: "Jongeren 18-35", icon: <Users className="mr-3 text-cyan-600" size={20} /> },
+            { id: "business_professionals", label: "Business & Professionals", icon: <Users className="mr-3 text-gray-600" size={20} /> },
+            { id: "families_groups", label: "Families & Vriendengroepen", icon: <Users className="mr-3 text-green-600" size={20} /> },
+            { id: "locals_regulars", label: "Locals & Vaste Klanten", icon: <Users className="mr-3 text-blue-600" size={20} /> },
+            { id: "seniors_mature", label: "50+ Generatie", icon: <Users className="mr-3 text-purple-600" size={20} /> },
+            { id: "tourists_visitors", label: "Toeristen & Bezoekers", icon: <Users className="mr-3 text-orange-600" size={20} /> },
+            { id: "food_enthusiasts", label: "Food Lovers", icon: <Users className="mr-3 text-red-600" size={20} /> },
+            { id: "quick_convenience", label: "Quick & Convenient", icon: <Timer className="mr-3 text-yellow-600" size={20} /> }
+        ]
+    },
+    6: {
         title: "Wat wil je bereiken met achtergrondmuziek?",
         subtitle: "Kies per dagdeel de gewenste sfeer",
         type: "time_based",
@@ -146,7 +161,7 @@ const brandQuestions = {
             }
         }
     },
-    6: {
+    7: {
         title: "Snelle vibes check - Welke woorden beschrijven jouw zaak het beste?",
         subtitle: "Kies 3-5 woorden",
         type: "vibes",
@@ -166,7 +181,7 @@ const brandQuestions = {
             { id: "youthful", label: "Youthful", color: "bg-cyan-100 text-cyan-800" }
         ]
     },
-    7: {
+    8: {
         title: "Welke muziekstijlen wil je absoluut vermijden?",
         subtitle: "Deze genres worden uitgesloten van je playlist",
         type: "multiple",
@@ -192,9 +207,9 @@ export default function QuestionWizard({
 }) {
     const handleQuestionAnswer = (questionId, answerId, isMultiple = false, timeSlot = null) => {
         setBrandData((prev) => {
-            if (questionId === 5 && timeSlot) { // Time-based is now step 5
-                const timeData = prev.q5 || {};
-                return { ...prev, q5: { ...timeData, [timeSlot]: answerId } };
+            if (questionId === 6 && timeSlot) { // Time-based is now step 6
+                const timeData = prev.q6 || {};
+                return { ...prev, q6: { ...timeData, [timeSlot]: answerId } };
             } else if (isMultiple) {
                 const currentAnswers = prev[`q${questionId}`] || [];
                 const newAnswers = currentAnswers.includes(answerId)
@@ -214,6 +229,8 @@ export default function QuestionWizard({
     const question = brandQuestions[analysisStep];
     if (!question) return null;
 
+    const totalSteps = 8; // Updated to 8
+
     // Text input voor restaurant naam (stap 1)
     if (question.type === 'text') {
         return (
@@ -224,12 +241,12 @@ export default function QuestionWizard({
                             <h2 className="text-xl font-semibold">{question.title}</h2>
                             <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
                         </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/7</span>
+                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / 7) * 100}%` }}
+                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
                         />
                     </div>
                 </div>
@@ -264,7 +281,7 @@ export default function QuestionWizard({
         );
     }
 
-    // Time-based UI (nu stap 5)
+    // Time-based UI (nu stap 6)
     if (question.type === 'time_based') {
         return (
             <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -274,12 +291,12 @@ export default function QuestionWizard({
                             <h2 className="text-xl font-semibold">{question.title}</h2>
                             <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
                         </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/7</span>
+                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / 7) * 100}%` }}
+                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
                         />
                     </div>
                 </div>
@@ -293,7 +310,7 @@ export default function QuestionWizard({
                                     <button
                                         key={option.id}
                                         onClick={() => handleQuestionAnswer(analysisStep, option.id, false, timeSlot)}
-                                        className={`p-3 rounded-lg text-center font-medium transition-all border ${brandData.q5?.[timeSlot] === option.id
+                                        className={`p-3 rounded-lg text-center font-medium transition-all border ${brandData.q6?.[timeSlot] === option.id
                                             ? `${option.color} border-current`
                                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
@@ -316,7 +333,7 @@ export default function QuestionWizard({
                     <button
                         onClick={() => setAnalysisStep(analysisStep + 1)}
                         className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        disabled={!brandData.q5 || Object.keys(brandData.q5).length === 0}
+                        disabled={!brandData.q6 || Object.keys(brandData.q6).length === 0}
                     >
                         Volgende
                     </button>
@@ -325,7 +342,7 @@ export default function QuestionWizard({
         );
     }
 
-    // Vibes UI (nu stap 6)
+    // Vibes UI (nu stap 7)
     if (question.type === 'vibes') {
         return (
             <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -335,12 +352,12 @@ export default function QuestionWizard({
                             <h2 className="text-xl font-semibold">{question.title}</h2>
                             <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
                         </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/7</span>
+                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / 7) * 100}%` }}
+                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
                         />
                     </div>
                 </div>
@@ -377,7 +394,7 @@ export default function QuestionWizard({
                         Vorige
                     </button>
                     <button
-                        onClick={() => setAnalysisStep(7)}
+                        onClick={() => setAnalysisStep(analysisStep + 1)}
                         className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                         disabled={!brandData[`q${analysisStep}`]?.length}
                     >
@@ -388,9 +405,9 @@ export default function QuestionWizard({
         );
     }
 
-    // Exclusions (nu stap 7)
-    if (analysisStep === 7) {
-        const q = brandQuestions[7];
+    // Exclusions (nu stap 8)
+    if (analysisStep === 8) {
+        const q = brandQuestions[8];
         return (
             <div className="bg-white p-6 rounded-lg shadow-lg">
                 <div className="mb-6">
@@ -399,7 +416,7 @@ export default function QuestionWizard({
                             <h2 className="text-xl font-semibold">{q.title}</h2>
                             <p className="text-sm text-gray-600 mt-1">{q.subtitle}</p>
                         </div>
-                        <span className="text-sm text-gray-500">Stap 7/7</span>
+                        <span className="text-sm text-gray-500">Stap {totalSteps}/{totalSteps}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }} />
@@ -410,8 +427,8 @@ export default function QuestionWizard({
                     {q.options.map((option) => (
                         <button
                             key={option.id}
-                            onClick={() => handleQuestionAnswer(7, option.id, true)}
-                            className={`p-3 rounded-lg text-left font-medium transition-all border ${brandData.q7?.includes(option.id)
+                            onClick={() => handleQuestionAnswer(8, option.id, true)}
+                            className={`p-3 rounded-lg text-left font-medium transition-all border ${brandData.q8?.includes(option.id)
                                 ? `${option.color} border-current transform scale-105`
                                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
@@ -421,17 +438,17 @@ export default function QuestionWizard({
                     ))}
                 </div>
 
-                {brandData.q7?.length > 0 && (
+                {brandData.q8?.length > 0 && (
                     <div className="mt-4 p-3 bg-red-50 rounded-lg">
                         <p className="text-sm text-red-800">
-                            Uitgesloten: {brandData.q7?.length || 0} genres – deze worden gefilterd uit je playlist
+                            Uitgesloten: {brandData.q8?.length || 0} genres – deze worden gefilterd uit je playlist
                         </p>
                     </div>
                 )}
 
                 <div className="mt-6 flex justify-between">
                     <button
-                        onClick={() => setAnalysisStep(6)}
+                        onClick={() => setAnalysisStep(7)}
                         className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
                         Vorige
@@ -447,7 +464,7 @@ export default function QuestionWizard({
         );
     }
 
-    // Standaard single/multiple vraag (stap 2, 3, 4)
+    // Standaard single/multiple vraag (stap 2, 3, 4, 5)
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg">
             <div className="mb-6">
@@ -456,12 +473,12 @@ export default function QuestionWizard({
                         <h2 className="text-xl font-semibold">{question.title}</h2>
                         <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
                     </div>
-                    <span className="text-sm text-gray-500">Stap {analysisStep}/7</span>
+                    <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                         className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(analysisStep / 7) * 100}%` }}
+                        style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
                     />
                 </div>
             </div>
@@ -477,7 +494,7 @@ export default function QuestionWizard({
                             key={option.id}
                             onClick={() => {
                                 handleQuestionAnswer(analysisStep, option.id, question.type === 'multiple');
-                                if (question.type === 'single' && analysisStep < 7) {
+                                if (question.type === 'single' && analysisStep < totalSteps) {
                                     setTimeout(() => setAnalysisStep(analysisStep + 1), 250);
                                 }
                             }}
@@ -507,7 +524,7 @@ export default function QuestionWizard({
                     </button>
                 )}
 
-                {analysisStep < 7 && question.type === 'multiple' && (
+                {analysisStep < totalSteps && question.type === 'multiple' && (
                     <button
                         onClick={() => setAnalysisStep(analysisStep + 1)}
                         className="ml-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"

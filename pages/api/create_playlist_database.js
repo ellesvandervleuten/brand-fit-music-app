@@ -317,9 +317,16 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
     }
 }
 
-// SIMPLIFIED: Always sort by popularity (high to low) as final tie-breaker
+// UPDATED: Always sort by popularity (high to low) as final tie-breaker + Top 50 boost + Redistribute hits
 function applyPopularitySorting(tracks) {
-    return tracks.sort((a, b) => {
+    const sortedTracks = tracks.map(track => {
+        // Apply Top 50 boost before sorting
+        if (track.source === 'Top 50 - Nederland' || track.is_current_hit) {
+            track.popularity = (track.popularity || 0) + 50;
+            console.log(`🎵 Top 50 boost applied: ${track.title} by ${track.artist} (${track.popularity - 50} → ${track.popularity})`);
+        }
+        return track;
+    }).sort((a, b) => {
         // First sort by match score if there's a significant difference
         const scoreA = a.match_score || 0;
         const scoreB = b.match_score || 0;
@@ -334,12 +341,16 @@ function applyPopularitySorting(tracks) {
 
         return popB - popA; // Higher popularity first (always)
     });
+
+    // NEW: Apply stratified distribution after sorting
+    return redistributeHits(sortedTracks);
 }
 
-// Log popularity distribution
+// Updated log popularity distribution to account for Top 50 boosts
 function logPopularityDistribution(tracks) {
     const popularityBuckets = {
-        'Very High (80-100)': 0,
+        'Top 50 Boosted (100+)': 0, // New category for boosted hits
+        'Very High (80-99)': 0,
         'High (60-79)': 0,
         'Medium (40-59)': 0,
         'Low (20-39)': 0,
@@ -347,12 +358,22 @@ function logPopularityDistribution(tracks) {
         'Unknown': 0
     };
 
+    let top50Count = 0;
+
     tracks.forEach(track => {
         const pop = track.popularity;
+        
+        // Count Top 50 tracks separately
+        if (track.source === 'Top 50 - Nederland' || track.is_current_hit) {
+            top50Count++;
+        }
+
         if (pop === undefined || pop === null) {
             popularityBuckets['Unknown']++;
+        } else if (pop >= 100) {
+            popularityBuckets['Top 50 Boosted (100+)']++;
         } else if (pop >= 80) {
-            popularityBuckets['Very High (80-100)']++;
+            popularityBuckets['Very High (80-99)']++;
         } else if (pop >= 60) {
             popularityBuckets['High (60-79)']++;
         } else if (pop >= 40) {
@@ -376,6 +397,14 @@ function logPopularityDistribution(tracks) {
         .reduce((sum, t) => sum + t.popularity, 0) / tracks.filter(t => t.popularity !== undefined).length;
 
     console.log(`Average popularity: ${avgPopularity?.toFixed(1) || 'N/A'}`);
+    
+    if (top50Count > 0) {
+        console.log(`🎵 Current hits in playlist: ${top50Count} tracks (${((top50Count / tracks.length) * 100).toFixed(1)}%)`);
+    }
+    if (top50Count > 0) {
+        console.log(`🎵 Current hits in playlist: ${top50Count} tracks (${((top50Count / tracks.length) * 100).toFixed(1)}%)`);
+        console.log(`🔄 Hits distributed using stratified placement algorithm`);
+    }
 }
 
 // Extract year from track
@@ -600,6 +629,65 @@ function calculateFinalStats(finalTracks) {
         average_match_score: Math.round(avgMatchScore * 100),
         ladder: finalTracks.length >= 20 ? "cultural_success" : "cultural_limited"
     };
+}
+
+// NEW: Redistribute Top 50 hits evenly throughout playlist
+function redistributeHits(tracks) {
+    console.log(`🔄 Starting hit redistribution for ${tracks.length} tracks`);
+    
+    // Separate hits from non-hits
+    const hits = tracks.filter(track => 
+        track.source === 'Top 50 - Nederland' || track.is_current_hit
+    );
+    const nonHits = tracks.filter(track => 
+        track.source !== 'Top 50 - Nederland' && !track.is_current_hit
+    );
+    
+    console.log(`📊 Redistribution split: ${hits.length} hits, ${nonHits.length} non-hits`);
+    
+    if (hits.length === 0 || nonHits.length === 0) {
+        console.log('⚠️ No redistribution needed - missing hits or non-hits');
+        return tracks; // Return original if no redistribution needed
+    }
+    
+    // Calculate interval for even distribution
+    const totalTracks = tracks.length;
+    const interval = Math.floor(totalTracks / hits.length);
+    
+    console.log(`📐 Distribution interval: every ${interval} tracks`);
+    
+    // Create new distributed array
+    const redistributed = [];
+    let hitIndex = 0;
+    let nonHitIndex = 0;
+    
+    for (let position = 0; position < totalTracks; position++) {
+        // Place hit at calculated positions (1, 6, 11, 16, etc.)
+        const shouldPlaceHit = position % interval === 0 && hitIndex < hits.length;
+        
+        if (shouldPlaceHit) {
+            redistributed.push(hits[hitIndex]);
+            console.log(`🎵 Placed hit at position ${position + 1}: ${hits[hitIndex].title} by ${hits[hitIndex].artist}`);
+            hitIndex++;
+        } else if (nonHitIndex < nonHits.length) {
+            redistributed.push(nonHits[nonHitIndex]);
+            nonHitIndex++;
+        }
+    }
+    
+    // Add any remaining tracks
+    while (hitIndex < hits.length) {
+        redistributed.push(hits[hitIndex]);
+        console.log(`🎵 Added remaining hit: ${hits[hitIndex].title}`);
+        hitIndex++;
+    }
+    while (nonHitIndex < nonHits.length) {
+        redistributed.push(nonHits[nonHitIndex]);
+        nonHitIndex++;
+    }
+    
+    console.log(`✅ Hit redistribution complete: ${redistributed.length} total tracks`);
+    return redistributed;
 }
 
 /* -------------------- HANDLER -------------------- */

@@ -113,7 +113,7 @@ export default function BrandFitMusicTool() {
                 cultural_genres: music_profile.cultural_context?.cultural_genres || [],
                 cultural_context: music_profile.cultural_context || null,
                 year_preferences: music_profile.year_preferences || null,
-                excluded_genres: brandData.q7 || [], // CRITICAL FIX: Voeg excluded genres toe!
+                excluded_genres: brandData.q8 || [], // FIXED: q8 instead of q7
                 operational_goal: music_profile.operational_goal || 'balanced_operation',
                 playlistName: `Scientific Brand-Fit Playlist (${playlistMethod === 'database' ? 'Database' : 'Live API'})`,
                 playlistDescription: `Generated using ${playlistMethod === 'database' ? 'database-first' : 'features-first'} scientific approach`,
@@ -242,12 +242,12 @@ export default function BrandFitMusicTool() {
                 </div>
             )}
 
-            {/* NIEUW: Exclusion Preview */}
-            {analysisResults && brandData.q7 && brandData.q7.length > 0 && (
+            {/* FIXED: Exclusion Preview - q8 instead of q7 */}
+            {analysisResults && brandData.q8 && brandData.q8.length > 0 && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2 text-red-800">🚫 Excluded Genres</h3>
                     <div className="flex flex-wrap gap-2">
-                        {brandData.q7.map((genre, i) => (
+                        {brandData.q8.map((genre, i) => (
                             <span key={i} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
                                 {genre.replace('_', ' ')}
                             </span>
@@ -398,12 +398,12 @@ function EnhancedResultsPanel({
                             ))}
                         </div>
 
-                        {/* NIEUW: Show excluded genres in results */}
-                        {brandData.q7 && brandData.q7.length > 0 && (
+                        {/* FIXED: Show excluded genres in results - q8 instead of q7 */}
+                        {brandData.q8 && brandData.q8.length > 0 && (
                             <div className="mt-4">
                                 <h4 className="font-semibold mb-2 text-red-600">Excluded Genres</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {brandData.q7.map((genre, i) => (
+                                    {brandData.q8.map((genre, i) => (
                                         <span key={i} className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
                                             🚫 {genre.replace('_', ' ')}
                                         </span>
@@ -436,6 +436,21 @@ function EnhancedResultsPanel({
                                         {genre}
                                     </span>
                                 ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* NIEUW: Demographic Influence Display */}
+                {music_profile.year_preferences && music_profile.year_preferences.demographic_influence && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold text-blue-800 mb-2">👥 Demographics</h4>
+                        <div className="text-sm text-blue-700">
+                            <div className="mb-1">
+                                <span className="font-medium">Target Groups:</span> {music_profile.year_preferences.demographic_influence}
+                            </div>
+                            <div>
+                                <span className="font-medium">Music Era:</span> {music_profile.year_preferences.description}
                             </div>
                         </div>
                     </div>
@@ -480,10 +495,10 @@ function EnhancedResultsPanel({
                     )}
                 </button>
 
-                {/* NIEUW: Preview van wat er uitgesloten wordt */}
-                {brandData.q7 && brandData.q7.length > 0 && (
+                {/* FIXED: Preview van wat er uitgesloten wordt - q8 instead of q7 */}
+                {brandData.q8 && brandData.q8.length > 0 && (
                     <div className="mt-3 p-3 bg-red-50 rounded text-sm text-red-700">
-                        <strong>Note:</strong> Excluding {brandData.q7.length} genre{brandData.q7.length > 1 ? 's' : ''} from playlist generation
+                        <strong>Note:</strong> Excluding {brandData.q8.length} genre{brandData.q8.length > 1 ? 's' : ''} from playlist generation
                     </div>
                 )}
             </div>
@@ -528,7 +543,7 @@ function EnhancedResultsPanel({
                             </div>
                         )}
 
-                        {/* NIEUW: Show filtering impact */}
+                        {/* FIXED: Show filtering impact - q8 instead of q7 */}
                         {spotifyPlaylist.meta && spotifyPlaylist.meta.filtering_results && (
                             <div className="mt-3 p-3 bg-blue-50 rounded">
                                 <h5 className="font-medium text-blue-800 mb-2">Filtering Pipeline:</h5>
@@ -539,8 +554,8 @@ function EnhancedResultsPanel({
                                     {spotifyPlaylist.meta.filtering_results.cultural_genre_search && (
                                         <div>Cultural: {spotifyPlaylist.meta.filtering_results.cultural_genre_search}</div>
                                     )}
-                                    {brandData.q7 && brandData.q7.length > 0 && (
-                                        <div>Exclusions: {brandData.q7.length} blocked</div>
+                                    {brandData.q8 && brandData.q8.length > 0 && (
+                                        <div>Exclusions: {brandData.q8.length} blocked</div>
                                     )}
                                     <div>Final: {spotifyPlaylist.tracks.length}</div>
                                 </div>
