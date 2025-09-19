@@ -37,3 +37,29 @@ body {
 .rocket-glow {
   filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.3));
 }
+
+/* Mobile overflow fix */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Container width fix */
+.container, main {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Specific mobile viewport fix */
+@media (max-width: 768px) {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+}
