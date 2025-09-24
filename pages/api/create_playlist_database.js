@@ -4,7 +4,7 @@ import { authOptions } from "./auth/[...nextauth]";
 import { loadEnrichedDatabase, searchTracksByFeatures, searchTracksByGenres, getDatabaseStats } from '../../lib/enrichedDatabase';
 import { checkExistingPlaylist, savePlaylist } from '../../lib/supabase';
 
-const MAX_TRACKS = 100;
+const MAX_TRACKS = 30;
 
 /* ----------------- helpers ----------------- */
 async function safeJson(resp) {
