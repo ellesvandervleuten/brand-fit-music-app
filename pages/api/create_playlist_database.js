@@ -53,6 +53,13 @@ function filterByLanguageWithCulturalContext(tracks, culturalContext) {
     
     console.log(`🌍 Language filtering - allowed: ${allowedLanguages.join(', ')}`);
     
+    // DEBUG: Check wat voor language data er is
+    const languageSample = tracks.slice(0, 10).map(t => ({ 
+        title: t.title, 
+        language: t.language 
+    }));
+    console.log('📝 Sample track languages:', languageSample);
+
     const originalCount = tracks.length;
     const filteredTracks = tracks.filter(track => {
         // No language data = allow (backward compatibility)
