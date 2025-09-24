@@ -1,7 +1,8 @@
-// pages/api/create_playlist_database.js - DATABASE-FIRST WITH YEAR FILTERING + CULTURAL CONTEXT + EXCLUSIONS + SIMPLE POPULARITY SORTING
+// pages/api/create_playlist_database.js - DATABASE-FIRST WITH YEAR FILTERING + CULTURAL CONTEXT + EXCLUSIONS + SIMPLE POPULARITY SORTING + SUPABASE TRACKING + LANGUAGE FILTERING
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "./auth/[...nextauth]";
 import { loadEnrichedDatabase, searchTracksByFeatures, searchTracksByGenres, getDatabaseStats } from '../../lib/enrichedDatabase';
+import { checkExistingPlaylist, savePlaylist } from '../../lib/supabase';
 
 const MAX_TRACKS = 100;
 
@@ -18,6 +19,51 @@ async function safeJson(resp) {
 
 function assertOk(cond, msg) {
     if (!cond) throw new Error(msg);
+}
+
+/**
+ * Cultural language filtering - allows specific languages based on cultural context
+ */
+function getCulturallyAllowedLanguages(culturalContext, baseLanguages = ['nl', 'en']) {
+    let allowedLanguages = [...baseLanguages];
+    
+    // Cultural context adds specific language
+    if (culturalContext?.culture) {
+        const culturalLanguageMap = {
+            'french': 'fr',
+            'spanish': 'es', 
+            'italian': 'it',
+            'greek': 'el',
+            'german': 'de',
+            'portuguese': 'pt',
+            'british': 'en' // already in base
+        };
+        
+        const culturalLang = culturalLanguageMap[culturalContext.culture];
+        if (culturalLang && !allowedLanguages.includes(culturalLang)) {
+            allowedLanguages.push(culturalLang);
+        }
+    }
+    
+    return allowedLanguages;
+}
+
+function filterByLanguageWithCulturalContext(tracks, culturalContext) {
+    const allowedLanguages = getCulturallyAllowedLanguages(culturalContext);
+    
+    console.log(`🌍 Language filtering - allowed: ${allowedLanguages.join(', ')}`);
+    
+    const originalCount = tracks.length;
+    const filteredTracks = tracks.filter(track => {
+        // No language data = allow (backward compatibility)
+        if (!track.language) return true;
+        
+        return allowedLanguages.includes(track.language.toLowerCase());
+    });
+    
+    console.log(`🔤 Language filtering: ${originalCount} → ${filteredTracks.length} tracks (removed ${originalCount - filteredTracks.length})`);
+    
+    return filteredTracks;
 }
 
 /**
@@ -64,9 +110,9 @@ function filterExcludedGenres(tracks, excludedGenres) {
     return filteredTracks;
 }
 
-// ENHANCED CULTURAL + DATABASE-FIRST TRACK SEARCH WITH YEAR FILTERING + EXCLUSIONS + SIMPLE POPULARITY SORTING
+// ENHANCED CULTURAL + DATABASE-FIRST TRACK SEARCH WITH LANGUAGE FILTERING + YEAR FILTERING + EXCLUSIONS + SIMPLE POPULARITY SORTING
 async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGenres, operationalGoal, culturalGenres = [], culturalContext = null, yearPreferences = null, excludedGenres = [], limit = 50) {
-    console.log("Cultural Database Search with Year Filtering + Exclusions + Simple Popularity Sorting:", {
+    console.log("Cultural Database Search with Language + Year Filtering + Exclusions + Simple Popularity Sorting:", {
         targetFeatures: audioFeatures,
         secondaryGenres,
         culturalGenres,
@@ -74,11 +120,11 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
         yearPreferences,
         excludedGenres,
         operationalGoal,
-        note: "Popularity used for final sorting only (always high to low)"
+        note: "Language filtering + Popularity used for final sorting only (always high to low)"
     });
 
     const meta = {
-        approach: "cultural_database_first_with_year_filtering_exclusions_and_simple_popularity_sorting",
+        approach: "cultural_database_first_with_language_year_filtering_exclusions_and_simple_popularity_sorting",
         target_features: audioFeatures,
         secondary_genres: secondaryGenres,
         cultural_genres: culturalGenres,
@@ -100,13 +146,22 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
 
         console.log(`Database loaded: ${dbStats.total_tracks} tracks, ${dbStats.with_spotify_data} enriched (${dbStats.coverage_percentage}%)`);
 
-        // STEP 1: Apply year filtering if preferences exist
-        let filteredDatabase = database;
+        // STEP 1: Apply language filtering first (most restrictive)
+        let filteredDatabase = filterByLanguageWithCulturalContext(database, culturalContext);
+        
+        meta.filtering_results.language_filtering = {
+            original_count: database.length,
+            after_filtering: filteredDatabase.length,
+            removed: database.length - filteredDatabase.length,
+            allowed_languages: getCulturallyAllowedLanguages(culturalContext)
+        };
+
+        // STEP 2: Apply year filtering if preferences exist
         if (yearPreferences && yearPreferences.min_year) {
             console.log(`Applying year filtering: minimum year ${yearPreferences.min_year}`);
 
-            const originalCount = database.length;
-            filteredDatabase = database.filter(track => {
+            const originalCount = filteredDatabase.length;
+            filteredDatabase = filteredDatabase.filter(track => {
                 const trackYear = extractYearFromTrack(track);
                 return trackYear >= yearPreferences.min_year;
             });
@@ -123,7 +178,7 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
             if (filteredDatabase.length < 100) {
                 console.warn('Year filtering removed too many tracks, relaxing minimum year');
                 const relaxedMinYear = yearPreferences.min_year - 10;
-                filteredDatabase = database.filter(track => {
+                filteredDatabase = filterByLanguageWithCulturalContext(database, culturalContext).filter(track => {
                     const trackYear = extractYearFromTrack(track);
                     return trackYear >= relaxedMinYear;
                 });
@@ -168,29 +223,30 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
 
             meta.filtering_results.cultural_genre_search = tracks.length;
             meta.steps.push({
-                step: "cultural_genres_priority_with_year_exclusions_and_simple_popularity_sorting",
+                step: "cultural_genres_priority_with_language_year_exclusions_and_simple_popularity_sorting",
                 tracks_found: tracks.length,
                 genres_used: culturalGenres,
                 excluded_applied: excludedGenres.length > 0,
+                language_filtered: true,
                 popularity_sorting: "high_to_low"
             });
 
             if (tracks.length >= 15) {
-                console.log(`Cultural success: ${tracks.length} tracks found (sorted by popularity)`);
+                console.log(`Cultural success: ${tracks.length} tracks found (language + popularity filtered)`);
                 const finalTracks = tracks.slice(0, Math.min(MAX_TRACKS, tracks.length));
                 const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
                 meta.final_stats = calculateFinalStats(finalTracks);
-                meta.success_strategy = "cultural_genres_primary_with_year_exclusions_and_simple_popularity_sorting";
+                meta.success_strategy = "cultural_genres_primary_with_language_year_exclusions_and_simple_popularity_sorting";
                 logYearDistribution(finalTracks);
                 logPopularityDistribution(finalTracks);
                 return { tracks: spotifyFormatTracks, meta };
             }
         }
 
-        // STRATEGY 2: Secondary genres with cultural boost and year scoring + exclusions + simple popularity sorting
+        // STRATEGY 2: Secondary genres with cultural boost and year scoring + language + exclusions + simple popularity sorting
         if (secondaryGenres && secondaryGenres.length > 0) {
-            console.log("Strategy 2: Secondary genres + cultural boost + year scoring + exclusions + simple popularity sorting");
+            console.log("Strategy 2: Secondary genres + cultural boost + language + year scoring + exclusions + simple popularity sorting");
 
             let tracks = searchTracksByFeatures(filteredDatabase, audioFeatures, {
                 tolerance: 0.25,
@@ -248,11 +304,12 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
             // Apply exclusion filtering after all scoring
             tracks = filterExcludedGenres(tracks, excludedGenres);
 
-            meta.filtering_results.secondary_genres_cultural_year_popularity = tracks.length;
+            meta.filtering_results.secondary_genres_cultural_language_year_popularity = tracks.length;
             meta.steps.push({
-                step: "secondary_genres_cultural_year_boost_with_exclusions_and_simple_popularity_sorting",
+                step: "secondary_genres_cultural_language_year_boost_with_exclusions_and_simple_popularity_sorting",
                 tracks_found: tracks.length,
                 excluded_applied: excludedGenres.length > 0,
+                language_filtered: true,
                 popularity_sorting: "high_to_low"
             });
 
@@ -261,15 +318,15 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
                 const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
                 meta.final_stats = calculateFinalStats(finalTracks);
-                meta.success_strategy = "secondary_genres_cultural_year_with_exclusions_and_simple_popularity_sorting";
+                meta.success_strategy = "secondary_genres_cultural_language_year_with_exclusions_and_simple_popularity_sorting";
                 logYearDistribution(finalTracks);
                 logPopularityDistribution(finalTracks);
                 return { tracks: spotifyFormatTracks, meta };
             }
         }
 
-        // STRATEGY 3: Pure feature matching with year scoring + exclusions + simple popularity sorting (fallback)
-        console.log("Strategy 3: Pure feature matching with year scoring + exclusions + simple popularity sorting fallback...");
+        // STRATEGY 3: Pure feature matching with language + year scoring + exclusions + simple popularity sorting (fallback)
+        console.log("Strategy 3: Pure feature matching with language + year scoring + exclusions + simple popularity sorting fallback...");
 
         let tracks = searchTracksByFeatures(filteredDatabase, audioFeatures, {
             tolerance: 0.3,
@@ -293,11 +350,12 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
         // Apply exclusions even in fallback
         tracks = filterExcludedGenres(tracks, excludedGenres);
 
-        meta.filtering_results.pure_features_year_popularity = tracks.length;
+        meta.filtering_results.pure_features_language_year_popularity = tracks.length;
         meta.steps.push({
-            step: "pure_feature_year_fallback_with_exclusions_and_simple_popularity_sorting",
+            step: "pure_feature_language_year_fallback_with_exclusions_and_simple_popularity_sorting",
             tracks_found: tracks.length,
             excluded_applied: excludedGenres.length > 0,
+            language_filtered: true,
             popularity_sorting: "high_to_low"
         });
 
@@ -305,13 +363,13 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
         const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
         meta.final_stats = calculateFinalStats(finalTracks);
-        meta.success_strategy = "feature_year_fallback_with_exclusions_and_simple_popularity_sorting";
+        meta.success_strategy = "feature_language_year_fallback_with_exclusions_and_simple_popularity_sorting";
         logYearDistribution(finalTracks);
         logPopularityDistribution(finalTracks);
         return { tracks: spotifyFormatTracks, meta };
 
     } catch (error) {
-        console.error("Cultural search with year filtering, exclusions, and simple popularity sorting failed:", error);
+        console.error("Cultural search with language + year filtering, exclusions, and simple popularity sorting failed:", error);
         meta.error = error.message;
         return { tracks: [], meta };
     }
@@ -398,9 +456,6 @@ function logPopularityDistribution(tracks) {
 
     console.log(`Average popularity: ${avgPopularity?.toFixed(1) || 'N/A'}`);
     
-    if (top50Count > 0) {
-        console.log(`🎵 Current hits in playlist: ${top50Count} tracks (${((top50Count / tracks.length) * 100).toFixed(1)}%)`);
-    }
     if (top50Count > 0) {
         console.log(`🎵 Current hits in playlist: ${top50Count} tracks (${((top50Count / tracks.length) * 100).toFixed(1)}%)`);
         console.log(`🔄 Hits distributed using stratified placement algorithm`);
@@ -593,6 +648,7 @@ function formatTrackForSpotify(track) {
         has_spotify_data: track.has_spotify_data,
         source: track.source,
         cultural_match: track.cultural_match || false,
+        language: track.language,
         database_info: {
             index: track.database_index,
             source_database: track.source_database,
@@ -611,6 +667,14 @@ function calculateFinalStats(finalTracks) {
     const recent2020s = finalTracks.filter(t => t.year >= 2020).length;
     const recent2010s = finalTracks.filter(t => t.year >= 2010).length;
 
+    // Language stats
+    const languageStats = {};
+    finalTracks.forEach(track => {
+        if (track.language) {
+            languageStats[track.language] = (languageStats[track.language] || 0) + 1;
+        }
+    });
+
     // Popularity stats
     const withPopularity = finalTracks.filter(t => t.popularity !== undefined).length;
     const avgPopularity = withPopularity > 0
@@ -624,6 +688,7 @@ function calculateFinalStats(finalTracks) {
         cultural_matches: culturalMatches,
         recent_2020s: recent2020s,
         recent_2010s: recent2010s,
+        language_distribution: languageStats,
         tracks_with_popularity: withPopularity,
         average_popularity: avgPopularity ? Math.round(avgPopularity) : null,
         average_match_score: Math.round(avgMatchScore * 100),
@@ -690,6 +755,7 @@ function redistributeHits(tracks) {
     return redistributed;
 }
 
+
 /* -------------------- HANDLER -------------------- */
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -697,6 +763,36 @@ export default async function handler(req, res) {
     try {
         const session = await getServerSession(req, res, authOptions);
         if (!session) return res.status(401).json({ error: "Not authenticated" });
+
+        // Get user data from Spotify API since session.user is empty
+        const spotifyUserResp = await fetch("https://api.spotify.com/v1/me", {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+        });
+        const spotifyUser = await safeJson(spotifyUserResp);
+
+        if (!spotifyUserResp.ok) {
+            console.error("Failed to get Spotify user:", spotifyUserResp.status, spotifyUser);
+            return res.status(401).json({ error: "Invalid Spotify token" });
+        }
+
+        console.log('🔍 Spotify user data:', spotifyUser);
+
+        // Use Spotify user data for database operations
+        const userEmail = spotifyUser.email;
+        const spotifyUserId = spotifyUser.id; // Spotify user ID
+
+        // Check if user already has a playlist
+        const existingPlaylist = await checkExistingPlaylist(userEmail);
+        if (existingPlaylist) {
+            return res.status(403).json({ 
+                error: 'You already have a RocketScience playlist. Only one per account allowed.',
+                existingPlaylist: {
+                    name: existingPlaylist.playlist_name,
+                    url: existingPlaylist.playlist_url,
+                    created_at: existingPlaylist.created_at
+                }
+            });
+        }
 
         const {
             audio_features,
@@ -718,7 +814,7 @@ export default async function handler(req, res) {
             });
         }
 
-        console.log("DATABASE-FIRST API Call with Cultural Context + Year Filtering + Exclusions + Simple Popularity Sorting:", {
+        console.log("DATABASE-FIRST API Call with Cultural Context + Language + Year Filtering + Exclusions + Simple Popularity Sorting:", {
             target_features: audio_features,
             secondary_genres: genres,
             cultural_genres,
@@ -726,10 +822,10 @@ export default async function handler(req, res) {
             year_preferences,
             excluded_genres,
             operational_goal,
-            note: "Popularity always sorts high to low as final step"
+            note: "Language filtering + Popularity always sorts high to low as final step"
         });
 
-        // Search tracks using CULTURAL DATABASE-FIRST approach
+        // Search tracks using CULTURAL DATABASE-FIRST approach with language filtering
         const { tracks, meta } = await searchTracksFromSortYourMusicDatabase(
             audio_features,
             genres,
@@ -741,17 +837,8 @@ export default async function handler(req, res) {
             50
         );
 
-        // Get user profile for playlist creation
-        const profileResp = await fetch("https://api.spotify.com/v1/me", {
-            headers: { Authorization: `Bearer ${session.accessToken}` },
-        });
-        const profileJson = await safeJson(profileResp);
-        if (!profileResp.ok) {
-            console.error("GET /me failed", profileResp.status, profileJson);
-            return res.status(401).json({ error: "Invalid Spotify token" });
-        }
-        const userId = profileJson?.id;
-        assertOk(!!userId, "No user id from /me");
+        // Use the already fetched Spotify user data instead of fetching again
+        assertOk(!!spotifyUserId, "No user id from Spotify");
 
         // Create playlist naming
         const spotifyTracks = tracks.filter(t => t.uri);
@@ -767,9 +854,13 @@ export default async function handler(req, res) {
             ? ` (-${excluded_genres.length} genres)`
             : '';
 
+        const languageSuffix = meta.filtering_results?.language_filtering?.allowed_languages?.length > 2
+            ? ` (${meta.filtering_results.language_filtering.allowed_languages.join('+')})`
+            : '';
+
         const finalPlaylistName = spotifyTracks.length
-            ? `${culturalPrefix}${playlistName}${yearSuffix}${exclusionSuffix}`
-            : `${culturalPrefix}${playlistName} (Research Only)${yearSuffix}${exclusionSuffix}`;
+            ? `${culturalPrefix}${playlistName}${yearSuffix}${exclusionSuffix}${languageSuffix}`
+            : `${culturalPrefix}${playlistName} (Research Only)${yearSuffix}${exclusionSuffix}${languageSuffix}`;
 
         const culturalDescription = cultural_context
             ? `Cultural: ${cultural_context.detected_culture} (${cultural_context.cultural_confidence}) | `
@@ -779,12 +870,16 @@ export default async function handler(req, res) {
             ? `Year Filter: ${year_preferences.min_year}+ | `
             : '';
 
+        const languageDescription = meta.filtering_results?.language_filtering
+            ? `Languages: ${meta.filtering_results.language_filtering.allowed_languages.join(', ')} | `
+            : '';
+
         const exclusionDescription = excluded_genres.length > 0
             ? `Excluded: ${excluded_genres.join(', ')} | `
             : '';
 
         const createPlaylistResp = await fetch(
-            `https://api.spotify.com/v1/users/${userId}/playlists`,
+            `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
             {
                 method: "POST",
                 headers: {
@@ -793,7 +888,7 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     name: finalPlaylistName,
-                    description: `${playlistDescription} | ${culturalDescription}${yearDescription}${exclusionDescription}Database: ${meta.database_stats?.total_tracks} tracks | Features: ${audio_features.tempo}BPM, Energy:${(audio_features.energy * 10).toFixed(1)}/10 | Sorted by popularity (high to low)`,
+                    description: `${playlistDescription} | ${culturalDescription}${languageDescription}${yearDescription}${exclusionDescription}Database: ${meta.database_stats?.total_tracks} tracks | Features: ${audio_features.tempo}BPM, Energy:${(audio_features.energy * 10).toFixed(1)}/10 | Sorted by popularity (high to low)`,
                     public: false,
                 }),
             }
@@ -833,6 +928,41 @@ export default async function handler(req, res) {
             }
         }
 
+        // Save playlist to Supabase after successful creation
+        if (playlistId) {
+            console.log('🔍 About to save playlist to Supabase...');
+            console.log('Email:', userEmail);
+            console.log('User ID:', spotifyUserId);
+            console.log('Playlist data:', {
+                id: playlistId,
+                name: playlistJson.name,
+                url: playlistUrl
+            });
+
+            try {
+                const saveResult = await savePlaylist(
+                    userEmail,        
+                    spotifyUserId,           
+                    {
+                        id: playlistId,
+                        name: playlistJson.name,
+                        url: playlistUrl
+                    },
+                    'database'
+                );
+                
+                console.log('💾 Supabase save result:', saveResult);
+                
+                if (saveResult.error) {
+                    console.error('❌ Supabase save error details:', saveResult.error);
+                } else {
+                    console.log('✅ Successfully saved to Supabase:', saveResult.data);
+                }
+            } catch (saveError) {
+                console.error('💥 Exception during Supabase save:', saveError);
+            }
+        }
+
         // Calculate final statistics
         const avgMatchScore = tracks.length > 0
             ? tracks.reduce((sum, track) => sum + (track.match_score || 0), 0) / tracks.length
@@ -848,7 +978,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
             success: true,
-            approach: "cultural_database_first_with_year_filtering_exclusions_and_simple_popularity_sorting",
+            approach: "cultural_database_first_with_language_year_filtering_exclusions_and_simple_popularity_sorting",
             playlist: {
                 id: playlistId,
                 name: playlistJson?.name || finalPlaylistName,
@@ -869,6 +999,7 @@ export default async function handler(req, res) {
                 excluded_genres_used: excluded_genres,
                 note: [
                     cultural_context ? `${cultural_context.detected_culture} cultural context` : null,
+                    meta.filtering_results?.language_filtering ? `languages: ${meta.filtering_results.language_filtering.allowed_languages.join(', ')}` : null,
                     year_preferences ? `${year_preferences.description}` : null,
                     excluded_genres.length > 0 ? `${excluded_genres.length} genres excluded` : null,
                     "popularity sorted high to low",
@@ -885,19 +1016,20 @@ export default async function handler(req, res) {
                 recent_2020s_found: recent2020s,
                 recent_2010s_found: recent2010s,
                 average_popularity_found: avgPopularity ? Math.round(avgPopularity) : null,
+                language_filtering_applied: true,
                 year_filtering_applied: year_preferences ? true : false,
                 exclusions_applied: excluded_genres.length > 0,
                 excluded_genres_count: excluded_genres.length,
                 popularity_sorting_applied: true
             },
             note: tracks.length
-                ? `Found ${tracks.length} tracks (${culturalMatches} cultural matches, ${recent2020s} from 2020s, avg popularity: ${avgPopularity ? Math.round(avgPopularity) : 'N/A'}, ${Math.round(avgMatchScore * 100)}% feature match). Strategy: ${meta.success_strategy}. ${spotifyTracks.length} added to Spotify playlist. ${excluded_genres.length > 0 ? `Excluded ${excluded_genres.length} genre types. ` : ''}Sorted by popularity (high to low).`
-                : "No tracks matched the specified criteria - try relaxing cultural, year, or audio feature requirements",
+                ? `Found ${tracks.length} tracks (${culturalMatches} cultural matches, ${recent2020s} from 2020s, avg popularity: ${avgPopularity ? Math.round(avgPopularity) : 'N/A'}, ${Math.round(avgMatchScore * 100)}% feature match). Strategy: ${meta.success_strategy}. ${spotifyTracks.length} added to Spotify playlist. ${meta.filtering_results?.language_filtering ? `Languages: ${meta.filtering_results.language_filtering.allowed_languages.join(', ')}. ` : ''}${excluded_genres.length > 0 ? `Excluded ${excluded_genres.length} genre types. ` : ''}Sorted by popularity (high to low).`
+                : "No tracks matched the specified criteria - try relaxing cultural, language, year, or audio feature requirements",
         });
     } catch (err) {
         console.error("Unhandled cultural database playlist error:", err);
         return res.status(500).json({
-            error: "Failed to create cultural database playlist with year filtering, exclusions, and simple popularity sorting",
+            error: "Failed to create cultural database playlist with language + year filtering, exclusions, and simple popularity sorting",
             details: err?.message || String(err),
         });
     }

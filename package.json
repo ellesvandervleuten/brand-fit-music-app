@@ -13,6 +13,7 @@
     "db-stats": "node -p \"require('./lib/enrichedDatabase').loadEnrichedDatabase().then(db => console.log(JSON.stringify(require('./lib/enrichedDatabase').getDatabaseStats(db), null, 2)))\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "dotenv": "^17.2.1",
     "formidable": "^3.5.4",
     "lucide-react": "^0.539.0",

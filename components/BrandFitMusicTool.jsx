@@ -124,6 +124,13 @@ export default function BrandFitMusicTool() {
             const data = await resp.json();
 
             if (!resp.ok) {
+                // Handle specific error cases
+                if (resp.status === 403 && data.existingPlaylist) {
+                    // User already has a playlist - show friendly message instead of crashing
+                    alert(`Je hebt al een RocketScience playlist!\n\nNaam: ${data.existingPlaylist.name}\nAangemaakt: ${new Date(data.existingPlaylist.created_at).toLocaleDateString()}\n\nJe kunt maar één playlist per account hebben.`);
+                    return; // Exit gracefully instead of throwing error
+                }
+                
                 throw new Error(data.error || 'Failed to create playlist');
             }
 
@@ -210,51 +217,6 @@ export default function BrandFitMusicTool() {
                 </div>
             </div>
 
-            {/* Method Selection */}
-            {analysisResults && (
-                <div className="mb-6 bg-gradient-to-r from-indigo-50 to-orange-50 p-6 rounded-2xl border border-indigo-200 shadow-sm">
-                    <h3 className="text-lg font-bold mb-4 text-gray-800 flex items-center">
-                        <Rocket size={20} className="mr-2 text-orange-500" />
-                        🚀 Playlist Generation Method
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <label className="bg-white p-4 rounded-xl border border-indigo-200 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all">
-                            <div className="flex items-center space-x-3">
-                                <input
-                                    type="radio"
-                                    value="database"
-                                    checked={playlistMethod === 'database'}
-                                    onChange={(e) => setPlaylistMethod(e.target.value)}
-                                    className="text-indigo-600 w-4 h-4"
-                                />
-                                <div>
-                                    <span className="font-bold text-indigo-700">🗄️ Database-First</span>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Uses enriched research database - {databaseStats?.total_tracks || 0} tracks
-                                    </p>
-                                </div>
-                            </div>
-                        </label>
-                        <label className="bg-white p-4 rounded-xl border border-indigo-200 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all">
-                            <div className="flex items-center space-x-3">
-                                <input
-                                    type="radio"
-                                    value="spotify_api"
-                                    checked={playlistMethod === 'spotify_api'}
-                                    onChange={(e) => setPlaylistMethod(e.target.value)}
-                                    className="text-indigo-600 w-4 h-4"
-                                />
-                                <div>
-                                    <span className="font-bold text-indigo-700">⚡ Spotify API</span>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Live API with feature estimation fallback
-                                    </p>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            )}
 
             {/* Exclusion Preview */}
                         {analysisResults && brandData.q8 && brandData.q8.length > 0 && (
@@ -737,28 +699,39 @@ function EnhancedResultsPanel({
             )}
 
             {/* ROI Projection */}
+            {/* Potential Impact */}
             {roi_projection && (
                 <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
                     <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center">
                         <Database size={24} className="mr-3 text-orange-500" />
-                        💰 ROI Projection & Business Impact
+                        🎯 Potential Business Impact
                     </h3>
                     <div className="grid md:grid-cols-3 gap-6">
                         <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl border border-green-200">
-                            <div className="text-3xl font-bold text-green-600 mb-2">+{roi_projection.revenue_increase}%</div>
-                            <div className="text-sm text-gray-600 font-medium">Revenue Increase</div>
-                            <div className="text-xs text-gray-500 mt-1">Science-based projection</div>
+                            <div className="text-2xl font-bold text-green-600 mb-2">Higher Revenue</div>
+                            <div className="text-sm text-gray-600 font-medium">Customer Satisfaction</div>
+                            <div className="text-xs text-gray-500 mt-1">Through optimized music selection</div>
                         </div>
                         <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-cyan-100 rounded-xl border border-blue-200">
-                            <div className="text-3xl font-bold text-blue-600 mb-2">{roi_projection.customer_satisfaction}%</div>
-                            <div className="text-sm text-gray-600 font-medium">Customer Satisfaction</div>
-                            <div className="text-xs text-gray-500 mt-1">Expected improvement</div>
+                            <div className="text-2xl font-bold text-blue-600 mb-2">
+                                {music_profile.features.tempo < 80 ? "Longer Stays" : "Faster Turnover"}
+                            </div>
+                            <div className="text-sm text-gray-600 font-medium">Tempo Optimization</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                                {music_profile.features.tempo < 80 ? "Slower tempo increases dwell time" : "Faster tempo encourages quicker decisions"}
+                            </div>
                         </div>
                         <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-indigo-100 rounded-xl border border-purple-200">
                             <div className="text-2xl font-bold text-purple-600 mb-2">{roi_projection.implementation_time}</div>
                             <div className="text-sm text-gray-600 font-medium">Implementation Time</div>
                             <div className="text-xs text-gray-500 mt-1">Ready to launch</div>
                         </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-600">
+                            <strong>Research-based approach:</strong> Impact depends on current music quality and customer demographics. 
+                            Results based on audio psychology research.
+                        </p>
                     </div>
                 </div>
             )}
