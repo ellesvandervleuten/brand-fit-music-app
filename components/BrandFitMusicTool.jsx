@@ -124,10 +124,12 @@ export default function BrandFitMusicTool() {
             const data = await resp.json();
 
             if (!resp.ok) {
-                // Handle specific error cases
-                if (resp.status === 403 && data.existingPlaylist) {
-                    // User already has a playlist - show friendly message instead of crashing
-                    alert(`Je hebt al een RocketScience playlist!\n\nNaam: ${data.existingPlaylist.name}\nAangemaakt: ${new Date(data.existingPlaylist.created_at).toLocaleDateString()}\n\nJe kunt maar één playlist per account hebben.`);
+                // Handle playlist limit error gracefully
+                if (resp.status === 403 && (data.existingPlaylists || data.existingPlaylist)) {
+                    const playlists = data.existingPlaylists || [data.existingPlaylist];
+                    const count = playlists.length;
+                    
+                    alert(`Je hebt al ${count} RocketScience playlist${count > 1 ? 's' : ''}!\n\nJe hebt het maximum voor nu bereikt. Neem contact met ons op om je account uit te breiden.\n\nBestaande playlists:\n${playlists.map(p => `• ${p.name}\n  Aangemaakt: ${new Date(p.created_at).toLocaleDateString()}`).join('\n\n')}`);
                     return; // Exit gracefully instead of throwing error
                 }
                 

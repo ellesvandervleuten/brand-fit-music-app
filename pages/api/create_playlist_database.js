@@ -789,15 +789,15 @@ export default async function handler(req, res) {
         const spotifyUserId = spotifyUser.id; // Spotify user ID
 
         // Check if user already has a playlist
-        const existingPlaylist = await checkExistingPlaylist(userEmail);
-        if (existingPlaylist) {
+        const existingPlaylists = await checkExistingPlaylist(userEmail);
+        if (existingPlaylists.length > 0) {  // Nu checkt het correct op limiet
             return res.status(403).json({ 
-                error: 'You already have a RocketScience playlist. Only one per account allowed.',
-                existingPlaylist: {
-                    name: existingPlaylist.playlist_name,
-                    url: existingPlaylist.playlist_url,
-                    created_at: existingPlaylist.created_at
-                }
+                error: `You already have ${existingPlaylists.length} RocketScience playlists. Maximum allowed exceeded.`,
+                existingPlaylists: existingPlaylists.map(p => ({
+                    name: p.playlist_name,
+                    url: p.playlist_url,
+                    created_at: p.created_at
+                }))
             });
         }
 
