@@ -2,6 +2,7 @@
 import { OpenAI } from 'openai';
 import formidable from 'formidable';
 import fs from 'fs';
+import path from 'path';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -11,7 +12,7 @@ export const config = {
     api: {
         bodyParser: false,
     },
-    maxDuration: 60,  // ← voeg deze regel toe
+    maxDuration: 60,
 };
 
 // Cultural patterns matching lib/logic.js
@@ -66,6 +67,59 @@ function imageToBase64(filepath) {
     return imageBuffer.toString('base64');
 }
 
+// Detecteer bestandstype op basis van extensie en magic bytes
+function detectFileType(filepath, originalName) {
+    const ext = path.extname(originalName || filepath).toLowerCase();
+
+    // Check magic bytes
+    const buffer = Buffer.alloc(5);
+    const fd = fs.openSync(filepath, 'r');
+    fs.readSync(fd, buffer, 0, 5, 0);
+    fs.closeSync(fd);
+
+    if (buffer.toString('ascii', 0, 5) === '%PDF-') return 'pdf';
+    if (['.jpg', '.jpeg'].includes(ext)) return 'jpeg';
+    if (ext === '.png') return 'png';
+    if (ext === '.gif') return 'gif';
+    if (ext === '.webp') return 'webp';
+
+    // Fallback: check magic bytes voor images
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8) return 'jpeg';
+    if (buffer[0] === 0x89 && buffer.toString('ascii', 1, 4) === 'PNG') return 'png';
+
+    return 'jpeg'; // default
+}
+
+function getMimeType(fileType) {
+    const mimeTypes = {
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        webp: 'image/webp',
+    };
+    return mimeTypes[fileType] || 'image/jpeg';
+}
+
+// Extraheer tekst uit PDF met pdfjs-dist (geen native canvas nodig)
+async function extractPdfText(filepath) {
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const pdfBuffer = new Uint8Array(fs.readFileSync(filepath));
+
+    const pdf = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+    const numPages = Math.min(pdf.numPages, 5); // max 5 pagina's
+    let fullText = '';
+
+    for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += `\n--- Page ${i} ---\n${pageText}`;
+    }
+
+    console.log(`PDF text extracted: ${numPages} page(s), ${fullText.length} characters`);
+    return fullText.trim();
+}
+
 // DEEL 3: Context-aware pricing analysis
 function analyzeMenuPricing(menuItems, businessType = null) {
     let pricingLevel = 'mid-range';
@@ -107,14 +161,12 @@ function analyzeMenuPricing(menuItems, businessType = null) {
     let mealType = 'lunch'; // default
 
     if (businessType === 'brunch_breakfast') {
-        // Voor brunch/breakfast zaak: check menu items
         const breakfastIndicators = ['pancake', 'waffle', 'egg', 'toast', 'croissant', 'yogurt', 'granola', 'bacon', 'omelette', 'coffee', 'tea'];
         const hasBreakfastItems = breakfastIndicators.some(indicator =>
             menuContent.includes(indicator)
         );
         mealType = hasBreakfastItems ? 'breakfast' : 'brunch';
     } else {
-        // Voor andere zaak types: check voor dinner vs lunch indicators
         const dinnerIndicators = ['steak', 'wine', 'course', 'lobster', 'filet', 'tasting menu', 'dessert wine', 'aperitif', '3-course', '4-course'];
         const lunchIndicators = ['sandwich', 'salad', 'soup', 'wrap', 'burger', 'pasta', 'pizza'];
 
@@ -130,7 +182,6 @@ function analyzeMenuPricing(menuItems, businessType = null) {
         } else if (hasLunchItems && !hasDinnerItems) {
             mealType = 'lunch';
         } else {
-            // Mixed menu - use average price to decide
             if (prices.length > 0) {
                 const avgPrice = prices.reduce((a, b) => a + b) / prices.length;
                 mealType = avgPrice > 25 ? 'dinner' : 'lunch';
@@ -144,7 +195,6 @@ function analyzeMenuPricing(menuItems, businessType = null) {
         const maxPrice = Math.max(...prices);
         const thresholds = priceThresholds[mealType];
 
-        // Bepaal pricing level binnen meal type context
         if (avgPrice >= thresholds.premium) {
             pricingLevel = 'premium';
         } else if (avgPrice >= thresholds.mid[0] && avgPrice <= thresholds.mid[1]) {
@@ -155,7 +205,6 @@ function analyzeMenuPricing(menuItems, businessType = null) {
             pricingLevel = 'upscale';
         }
 
-        // Apply upscale keyword boost
         if (upscaleKeywordCount >= 3) {
             upscaleBoost = 0.2;
             if (pricingLevel === 'mid-range') pricingLevel = 'upscale';
@@ -198,26 +247,22 @@ function detectMenuCulturalContext({ restaurantName, menuItems, vibe }) {
     let culturalScore = 0;
     let matchReasons = [];
 
-    // Check each cultural pattern
     for (const [culture, patterns] of Object.entries(culturalPatterns)) {
         let score = 0;
         let reasons = [];
 
-        // Name pattern matching
         const nameMatches = patterns.name_patterns.filter(pattern => name.includes(pattern));
         if (nameMatches.length > 0) {
             score += 0.4 * nameMatches.length;
             reasons.push(`Name "${restaurantName}" contains ${culture} patterns: ${nameMatches.join(', ')}`);
         }
 
-        // Menu item matching
         const menuMatches = patterns.menu_indicators.filter(indicator => menuContent.includes(indicator));
         if (menuMatches.length > 0) {
             score += 0.3 * menuMatches.length;
             reasons.push(`Menu contains ${culture} items: ${menuMatches.slice(0, 3).join(', ')}${menuMatches.length > 3 ? '...' : ''}`);
         }
 
-        // Vibe multiplier - "european_sophisticated" boosts European cultures
         if (vibe === 'european_sophisticated') {
             if (['french', 'spanish', 'italian', 'greek'].includes(culture)) {
                 score *= 1.5;
@@ -232,7 +277,6 @@ function detectMenuCulturalContext({ restaurantName, menuItems, vibe }) {
         }
     }
 
-    // Only return if we have a significant cultural match
     if (culturalScore >= 0.3) {
         const pattern = culturalPatterns[detectedCulture];
         return {
@@ -249,10 +293,8 @@ function detectMenuCulturalContext({ restaurantName, menuItems, vibe }) {
 
 function parseMenuAnalysisResponse(text) {
     try {
-        // First try to extract JSON from markdown codeblocks
         let jsonStr = text;
 
-        // Remove markdown codeblock if present
         if (text.includes('```json')) {
             const start = text.indexOf('```json') + 7;
             const end = text.indexOf('```', start);
@@ -266,7 +308,6 @@ function parseMenuAnalysisResponse(text) {
                 jsonStr = text.slice(start, end).trim();
             }
         } else {
-            // Look for JSON object
             const start = text.indexOf('{');
             const end = text.lastIndexOf('}') + 1;
             if (start !== -1 && end > start) {
@@ -276,7 +317,6 @@ function parseMenuAnalysisResponse(text) {
 
         const parsed = JSON.parse(jsonStr);
 
-        // Ensure menu_items is an array
         if (parsed.menu_items && !Array.isArray(parsed.menu_items)) {
             parsed.menu_items = [parsed.menu_items];
         }
@@ -292,14 +332,11 @@ function parseMenuAnalysisResponse(text) {
 }
 
 function extractMenuFallbackAnalysis(text) {
-    // Extract menu items with regex as fallback
     const menuItems = [];
     const lines = text.split('\n');
 
     lines.forEach(line => {
-        // Look for lines with prices (€X.XX, $X.XX, etc.)
         if (/[€$£¥]\d+[\.,]\d{2}/.test(line) && line.trim().length > 5) {
-            // Clean up the line - remove quotes, extra spaces, etc.
             let cleanLine = line.trim().replace(/["'`]/g, '').replace(/,\s*$/, '');
             if (cleanLine.length > 3) {
                 menuItems.push(cleanLine);
@@ -307,7 +344,6 @@ function extractMenuFallbackAnalysis(text) {
         }
     });
 
-    // Also look for items in the format "Item - €XX.XX"
     const itemMatches = text.match(/[A-Za-z][^€$£¥\n]*[€$£¥]\d+[\.,]\d{2}/g);
     if (itemMatches) {
         itemMatches.forEach(match => {
@@ -337,7 +373,6 @@ function mapMenuToAudioFeatures(menuAnalysis, restaurantName = '', vibe = '') {
     const sophistication = menuAnalysis.sophistication_level || 0.7;
     const pricingBoost = menuAnalysis.pricing_analysis?.upscale_boost || 0;
 
-    // Enhanced cultural detection using menu items + name + vibe
     const culturalContext = detectMenuCulturalContext({
         restaurantName,
         menuItems: menuAnalysis.menu_items || [],
@@ -352,7 +387,6 @@ function mapMenuToAudioFeatures(menuAnalysis, restaurantName = '', vibe = '') {
         culturalBoost = culturalContext.boost_amount;
         culturalReasoning = culturalContext.match_reasons;
 
-        // Map detected culture to specific audio adjustments and genres
         const cultureAudioMap = {
             french: {
                 acousticness_extra: 0.2,
@@ -456,26 +490,14 @@ export default async function handler(req, res) {
             });
         }
 
-        const base64Image = imageToBase64(filePath);
+        const originalName = file.originalFilename || file.originalName || file.name || '';
+        const fileType = detectFileType(filePath, originalName);
 
-        console.log('Analyzing menu with OpenAI Vision API...');
+        console.log(`Menu file type detected: ${fileType} (${originalName})`);
+        console.log('Analyzing menu with OpenAI...');
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: `data:image/jpeg;base64,${base64Image}`,
-                                detail: "high"
-                            }
-                        },
-                        {
-                            type: "text",
-                            text: `Analyze this restaurant menu for cultural music optimization. Restaurant context: "${restaurantName}" - ${businessType} with ${vibe} vibe.
+        // Gedeelde prompt voor zowel PDF als afbeelding
+        const menuPrompt = `Analyze this restaurant menu for cultural music optimization. The menu may span multiple pages - combine all items into one analysis. Restaurant context: "${restaurantName}" - ${businessType} with ${vibe} vibe.
 
 Extract ALL menu items with prices and identify cultural/cuisine indicators for music matching.
 
@@ -501,14 +523,91 @@ Focus on cultural cuisine markers:
 - British: fish and chips, shepherd's pie, scones
 - Greek: moussaka, gyros, tzatziki, baklava
 
-Extract ALL items with exact prices - this affects cultural music matching.`
+Extract ALL items with exact prices - this affects cultural music matching.`;
+
+        let response;
+
+        if (fileType === 'pdf') {
+            // PDF: extraheer tekst met pdfjs-dist en stuur als tekst naar OpenAI
+            console.log('Processing PDF menu...');
+            let pdfText;
+            try {
+                pdfText = await extractPdfText(filePath);
+                console.log(`PDF text extracted: ${pdfText.length} characters`);
+            } catch (pdfError) {
+                console.error('PDF text extraction failed:', pdfError.message);
+                return res.status(400).json({
+                    error: 'PDF extraction failed',
+                    details: `Could not read PDF: ${pdfError.message}. Try uploading a JPG or PNG instead.`
+                });
+            }
+
+            if (!pdfText || pdfText.trim().length < 10) {
+                // PDF heeft geen extracteerbare tekst (bijv. gescand) - stuur als base64
+                console.log('PDF has no extractable text, sending as base64 to Vision API...');
+                const base64 = imageToBase64(filePath);
+                response = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    messages: [
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: `data:application/pdf;base64,${base64}`,
+                                        detail: "high"
+                                    }
+                                },
+                                { type: "text", text: menuPrompt }
+                            ]
                         }
-                    ]
-                }
-            ],
-            max_tokens: 1000,
-            temperature: 0.2
-        });
+                    ],
+                    max_tokens: 2000,
+                    temperature: 0.2
+                });
+            } else {
+                // PDF heeft tekst - stuur tekst naar OpenAI (sneller en goedkoper)
+                console.log('Sending extracted PDF text to OpenAI...');
+                response = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    messages: [
+                        {
+                            role: "user",
+                            content: `Here is the menu text extracted from a PDF:\n\n${pdfText}\n\n${menuPrompt}`
+                        }
+                    ],
+                    max_tokens: 2000,
+                    temperature: 0.2
+                });
+            }
+        } else {
+            // Afbeelding: stuur naar OpenAI Vision met correct mime type
+            const base64Image = imageToBase64(filePath);
+            const mimeType = getMimeType(fileType);
+            console.log(`Sending ${fileType} image to OpenAI Vision API...`);
+
+            response = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:${mimeType};base64,${base64Image}`,
+                                    detail: "high"
+                                }
+                            },
+                            { type: "text", text: menuPrompt }
+                        ]
+                    }
+                ],
+                max_tokens: 2000,
+                temperature: 0.2
+            });
+        }
 
         const analysisText = response.choices[0].message.content;
         console.log('Menu analysis received:', analysisText.substring(0, 300) + '...');
@@ -526,9 +625,9 @@ Extract ALL items with exact prices - this affects cultural music matching.`
         // Clean up temporary file
         try {
             fs.unlinkSync(filePath);
-            console.log('Menu file cleaned up');
+            console.log('Temporary file cleaned up');
         } catch (cleanupError) {
-            console.warn('Could not clean up menu file:', cleanupError.message);
+            console.warn('Could not clean up file:', cleanupError.message);
         }
 
         // Enhanced audio feature mapping with cultural context
@@ -541,7 +640,8 @@ Extract ALL items with exact prices - this affects cultural music matching.`
                 audio_feature_adjustments: audioFeatureAdjustments
             },
             filename: file.originalFilename || file.originalName || file.name || 'menu_analysis',
-            api_used: 'openai_vision_menu_cultural',
+            api_used: fileType === 'pdf' ? 'openai_pdf_menu_cultural' : 'openai_vision_menu_cultural',
+            input_type: fileType,
             debug: {
                 restaurant_name: restaurantName,
                 business_type: businessType,

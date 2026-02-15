@@ -21,6 +21,7 @@
     "next-auth": "^4.24.11",
     "node-fetch": "^2.7.0",
     "openai": "^5.12.2",
+    "pdfjs-dist": "^4.0.379",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "spotify-web-api-node": "^5.0.2",
