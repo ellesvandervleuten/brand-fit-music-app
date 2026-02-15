@@ -11,6 +11,7 @@ export const config = {
     api: {
         bodyParser: false,
     },
+    maxDuration: 60,  // ← voeg deze regel toe
 };
 
 // Cultural patterns matching lib/logic.js
