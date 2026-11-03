@@ -164,13 +164,14 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
         };
 
         // STEP 2: Apply year filtering if preferences exist
-        if (yearPreferences && yearPreferences.min_year) {
-            console.log(`Applying year filtering: minimum year ${yearPreferences.min_year}`);
+        const hardMinYear = yearPreferences ? (yearPreferences.hard_min_year ?? yearPreferences.min_year) : null;
+        if (hardMinYear) {
+            console.log(`Applying soft year floor: ${hardMinYear}+ (era center ${yearPreferences.center_year ?? 'n/a'})`);
 
             const originalCount = filteredDatabase.length;
             filteredDatabase = filteredDatabase.filter(track => {
                 const trackYear = extractYearFromTrack(track);
-                return trackYear >= yearPreferences.min_year;
+                return trackYear >= hardMinYear;
             });
 
             console.log(`Year filtering: ${originalCount} -> ${filteredDatabase.length} tracks`);
@@ -184,7 +185,7 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
             // Fallback if year filtering removes too many tracks
             if (filteredDatabase.length < 100) {
                 console.warn('Year filtering removed too many tracks, relaxing minimum year');
-                const relaxedMinYear = yearPreferences.min_year - 10;
+                const relaxedMinYear = hardMinYear - 10;
                 filteredDatabase = filterByLanguageWithCulturalContext(database, culturalContext).filter(track => {
                     const trackYear = extractYearFromTrack(track);
                     return trackYear >= relaxedMinYear;
@@ -240,7 +241,7 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
 
             if (tracks.length >= 15) {
                 console.log(`Cultural success: ${tracks.length} tracks found (language + popularity filtered)`);
-                const finalTracks = tracks.slice(0, Math.min(MAX_TRACKS, tracks.length));
+                const finalTracks = selectWithEraQuota(tracks, yearPreferences, MAX_TRACKS);
                 const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
                 meta.final_stats = calculateFinalStats(finalTracks);
@@ -321,7 +322,7 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
             });
 
             if (tracks.length >= 10) {
-                const finalTracks = tracks.slice(0, Math.min(MAX_TRACKS, tracks.length));
+                const finalTracks = selectWithEraQuota(tracks, yearPreferences, MAX_TRACKS);
                 const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
                 meta.final_stats = calculateFinalStats(finalTracks);
@@ -366,7 +367,7 @@ async function searchTracksFromSortYourMusicDatabase(audioFeatures, secondaryGen
             popularity_sorting: "high_to_low"
         });
 
-        const finalTracks = tracks.slice(0, Math.min(MAX_TRACKS, tracks.length));
+        const finalTracks = selectWithEraQuota(tracks, yearPreferences, MAX_TRACKS);
         const spotifyFormatTracks = finalTracks.map(formatTrackForSpotify);
 
         meta.final_stats = calculateFinalStats(finalTracks);
@@ -556,6 +557,14 @@ function calculateYearBoost(trackYear, yearPreferences) {
         return 1.0;
     }
 
+    // Nieuwe era-profielen: 1.0 binnen het kernvenster, daarbuiten 0.04 per jaar omlaag tot 0.3.
+    // Recent repertoire wordt niet via de score maar via het quotum (selectWithEraQuota) geregeld.
+    if (Array.isArray(yearPreferences.era_window)) {
+        const [start, end] = yearPreferences.era_window;
+        const distance = trackYear < start ? start - trackYear : trackYear > end ? trackYear - end : 0;
+        return Math.max(0.3, 1 - distance * 0.04);
+    }
+
     const [preferredStart, preferredEnd] = yearPreferences.preferred_years;
 
     // Strong modern/youthful preference (positive recency_weight)
@@ -600,6 +609,37 @@ function calculateYearBoost(trackYear, yearPreferences) {
             return 0.1;
         }
     }
+}
+
+// Era-quotum: vaste verhouding recent vs. kern, zodat één vibe-woord nooit de hele lijst kantelt.
+// tracks moeten al gesorteerd zijn (beste eerst).
+function selectWithEraQuota(tracks, yearPreferences, n) {
+    const limit = Math.min(n, tracks.length);
+    if (!yearPreferences || yearPreferences.recent_share === undefined || !yearPreferences.recent_from_year) {
+        return tracks.slice(0, limit);
+    }
+    const recentFrom = yearPreferences.recent_from_year;
+    const isRecent = t => (t.year ?? extractYearFromTrack(t)) >= recentFrom;
+    const recent = tracks.filter(isRecent);
+    const core = tracks.filter(t => !isRecent(t));
+
+    const recentTarget = Math.round(limit * yearPreferences.recent_share);
+    let picked = [...recent.slice(0, recentTarget), ...core.slice(0, limit - recentTarget)];
+
+    // Backfill als één van beide emmers te klein is
+    if (picked.length < limit) {
+        const chosen = new Set(picked);
+        for (const t of tracks) {
+            if (picked.length >= limit) break;
+            if (!chosen.has(t)) { picked.push(t); chosen.add(t); }
+        }
+    }
+
+    // Terug in scorevolgorde, zodat de playlist nog steeds met de beste matches begint
+    const order = new Map(tracks.map((t, i) => [t, i]));
+    picked.sort((a, b) => order.get(a) - order.get(b));
+    console.log(`Era quota: ${recentTarget}/${limit} recent (${recentFrom}+) gevraagd, ${picked.filter(isRecent).length} geleverd`);
+    return picked;
 }
 
 // Log year distribution
