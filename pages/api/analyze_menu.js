@@ -238,6 +238,13 @@ function analyzeMenuPricing(menuItems, businessType = null) {
     };
 }
 
+// Hele-woord match, zodat bv. 'ale' niet matcht in 'salade' of 'royale'
+function containsTerm(text, term) {
+    const t = String(term).trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (!t) return false;
+    return new RegExp(`(^|[^\\p{L}])${t}([^\\p{L}]|$)`, 'u').test(text);
+}
+
 // NIEUW: Enhanced Cultural Detection
 function detectMenuCulturalContext({ restaurantName, menuItems, vibe }) {
     const name = String(restaurantName || '').toLowerCase();
@@ -251,13 +258,13 @@ function detectMenuCulturalContext({ restaurantName, menuItems, vibe }) {
         let score = 0;
         let reasons = [];
 
-        const nameMatches = patterns.name_patterns.filter(pattern => name.includes(pattern));
+        const nameMatches = patterns.name_patterns.filter(pattern => containsTerm(name, pattern));
         if (nameMatches.length > 0) {
             score += 0.4 * nameMatches.length;
             reasons.push(`Name "${restaurantName}" contains ${culture} patterns: ${nameMatches.join(', ')}`);
         }
 
-        const menuMatches = patterns.menu_indicators.filter(indicator => menuContent.includes(indicator));
+        const menuMatches = patterns.menu_indicators.filter(indicator => containsTerm(menuContent, indicator));
         if (menuMatches.length > 0) {
             score += 0.3 * menuMatches.length;
             reasons.push(`Menu contains ${culture} items: ${menuMatches.slice(0, 3).join(', ')}${menuMatches.length > 3 ? '...' : ''}`);
