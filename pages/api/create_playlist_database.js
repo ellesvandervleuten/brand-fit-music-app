@@ -1,6 +1,5 @@
 // pages/api/create_playlist_database.js - DATABASE-FIRST WITH YEAR FILTERING + CULTURAL CONTEXT + EXCLUSIONS + SIMPLE POPULARITY SORTING + SUPABASE TRACKING + LANGUAGE FILTERING
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "./auth/[...nextauth]";
+import { getSpotifySession } from "./auth/[...nextauth]";
 import { loadEnrichedDatabase, searchTracksByFeatures, searchTracksByGenres, getDatabaseStats } from '../../lib/enrichedDatabase';
 import { checkExistingPlaylist, savePlaylist } from '../../lib/supabase';
 
@@ -808,7 +807,7 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
     try {
-        const session = await getServerSession(req, res, authOptions);
+        const session = await getSpotifySession(req, res);
         if (!session) return res.status(401).json({ error: "Not authenticated" });
 
         // Get user data from Spotify API since session.user is empty
@@ -822,7 +821,6 @@ export default async function handler(req, res) {
             return res.status(401).json({ error: "Invalid Spotify token" });
         }
 
-        console.log('🔍 Spotify user data:', spotifyUser);
 
         // Use Spotify user data for database operations
         const userEmail = spotifyUser.email;
@@ -978,8 +976,6 @@ export default async function handler(req, res) {
         // Save playlist to Supabase after successful creation
         if (playlistId) {
             console.log('🔍 About to save playlist to Supabase...');
-            console.log('Email:', userEmail);
-            console.log('User ID:', spotifyUserId);
             console.log('Playlist data:', {
                 id: playlistId,
                 name: playlistJson.name,

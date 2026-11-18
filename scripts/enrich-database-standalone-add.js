@@ -36,8 +36,8 @@ if (global.fetch) {
 const CONFIG = {
     BATCH_SIZE: 50,
     RATE_LIMIT_DELAY: 100, // ms between requests
-    INPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'input', 'sortyourmusic.xlsx'),
-    OUTPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
+    INPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'input', 'sortyourmusic.xlsx'),
+    OUTPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
 
     // Spotify credentials from .env file
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || process.env.NEXTAUTH_SPOTIFY_CLIENT_ID,

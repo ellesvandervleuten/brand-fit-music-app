@@ -49,15 +49,6 @@ export default function BrandFitMusicTool() {
 
     const { status } = useSession();
 
-    // Load databases on mount
-    useEffect(() => {
-        (async () => {
-            const data = await loadTop2000Database();
-            setTop2000Database(data || []);
-            await loadEnrichedDatabaseData();
-        })();
-    }, []);
-
     const loadEnrichedDatabaseData = async () => {
         setIsLoadingDatabase(true);
         try {
@@ -75,6 +66,15 @@ export default function BrandFitMusicTool() {
             setIsLoadingDatabase(false);
         }
     };
+
+    // Load databases on mount
+    useEffect(() => {
+        (async () => {
+            const data = await loadTop2000Database();
+            setTop2000Database(data || []);
+            await loadEnrichedDatabaseData();
+        })();
+    }, []);
 
     const calculateBrandFit = () => {
         const music_profile = calculateOptimalMusicProfile({

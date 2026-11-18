@@ -39,8 +39,8 @@ const CONFIG = {
     DEBUG_API: false,          // 1x korte check; zet op false voor productie
 
     // NU GEBRUIKT HET ENRICHED_DATABASE ALS INPUT!
-    INPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
-    OUTPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
+    INPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
+    OUTPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
 
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || process.env.NEXTAUTH_SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET || process.env.NEXTAUTH_SPOTIFY_CLIENT_SECRET

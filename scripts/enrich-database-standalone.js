@@ -37,8 +37,8 @@ const CONFIG = {
     RATE_LIMIT_DELAY_MS: 800,      // kleine pauze tussen calls
     SEARCH_DELAY_MS: 200,          // mini-pauze tussen subcalls binnen 1 track
     DEBUG_API: false,              // zet true voor 1x debug per run
-    INPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'input', 'sortyourmusic.xlsx'),
-    OUTPUT_FILE: path.join(__dirname, '..', '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
+    INPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'input', 'sortyourmusic.xlsx'),
+    OUTPUT_FILE: path.join(__dirname, '..', 'public', 'data', 'output', 'enriched_database.xlsx'),
 
     SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || process.env.NEXTAUTH_SPOTIFY_CLIENT_ID,
     SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET || process.env.NEXTAUTH_SPOTIFY_CLIENT_SECRET

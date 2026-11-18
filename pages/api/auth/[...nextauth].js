@@ -1,5 +1,6 @@
 // pages/api/auth/[...nextauth].js
 import NextAuth from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import SpotifyProvider from 'next-auth/providers/spotify'
 
 // REFRESH FUNCTIE
@@ -45,23 +46,13 @@ export const authOptions = {
             clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
             authorization: {
                 params: {
+                    // Alleen wat de app echt gebruikt: profiel/e-mail (/v1/me)
+                    // en playlists aanmaken + vullen.
                     scope: [
-                        // Basis scopes (die je al hebt)
                         "user-read-email",
                         "user-read-private",
                         "playlist-modify-private",
                         "playlist-modify-public",
-
-                        // Extra scopes die kunnen helpen
-                        "user-library-read",
-                        "user-library-modify",
-                        "user-top-read",
-                        "user-read-recently-played",
-                        "user-read-currently-playing",
-                        "user-read-playback-state",
-                        "user-follow-read",
-                        "playlist-read-private",
-                        "playlist-read-collaborative"
                     ].join(" ")
                 }
             }
@@ -71,9 +62,6 @@ export const authOptions = {
         async jwt({ token, account }) {
             // Initial sign in
             if (account) {
-                console.log("=== NEW LOGIN SCOPES ===");
-                console.log("Account scope:", account.scope);
-                console.log("========================");
                 return {
                     accessToken: account.access_token,
                     accessTokenExpires: Date.now() + account.expires_in * 1000,
@@ -90,6 +78,21 @@ export const authOptions = {
             // Access token has expired, try to update it
             return refreshAccessToken(token);
         },
+        // Deze sessie gaat ook naar de browser (/api/auth/session):
+        // het Spotify-token zit er bewust NIET in.
+        async session({ session, token }) {
+            session.error = token.error;
+            return session;
+        }
+    }
+};
+
+// Alleen voor server-side API-routes: dezelfde sessie, maar met het
+// Spotify-token erbij. Ververst het token automatisch als het verlopen is.
+const serverAuthOptions = {
+    ...authOptions,
+    callbacks: {
+        ...authOptions.callbacks,
         async session({ session, token }) {
             session.accessToken = token.accessToken;
             session.error = token.error;
@@ -97,5 +100,9 @@ export const authOptions = {
         }
     }
 };
+
+export function getSpotifySession(req, res) {
+    return getServerSession(req, res, serverAuthOptions);
+}
 
 export default NextAuth(authOptions)

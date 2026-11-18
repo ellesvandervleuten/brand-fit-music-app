@@ -194,7 +194,7 @@ export default function VisualAnalysis({
                         <div>
                             <Camera className="mx-auto text-blue-400 mb-4" size={48} />
                             <h4 className="text-lg font-medium mb-2">Upload Brand Visuals</h4>
-                            <p className="text-gray-600 mb-4">Logo, interieur foto's, branding materiaal</p>
+                            <p className="text-gray-600 mb-4">Logo, interieur foto’s, branding materiaal</p>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center mx-auto"
@@ -339,7 +339,7 @@ export default function VisualAnalysis({
                                 className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center mx-auto"
                                 disabled={isAnalyzingMenu}
                             >
-                                <Upload className="mr-2" size={16} /> Voeg meer menu's toe
+                                <Upload className="mr-2" size={16} /> Voeg meer menu’s toe
                             </button>
                         </div>
                     ) : (
@@ -347,7 +347,7 @@ export default function VisualAnalysis({
                             <FileText className="mx-auto text-purple-400 mb-4" size={48} />
                             <h4 className="text-lg font-medium mb-2">Upload Menu</h4>
                             <p className="text-gray-600 mb-4">
-                                Menukaart foto's voor prijsanalyse en culturele context
+                                Menukaart foto’s voor prijsanalyse en culturele context
                                 {brandData?.restaurantName && (
                                     <span className="block text-sm text-purple-600 mt-1">
                                         Gekoppeld aan {brandData.restaurantName}

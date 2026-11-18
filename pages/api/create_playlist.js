@@ -1,6 +1,5 @@
 // pages/api/create_playlist.js - FEATURES-FIRST SCIENTIFIC APPROACH
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "./auth/[...nextauth]";
+import { getSpotifySession } from "./auth/[...nextauth]";
 
 const MAX_TRACKS = 100;
 /* ----------------- helpers ----------------- */
@@ -175,7 +174,7 @@ async function fetchAudioFeatures(ids, token, targetFeatures = null, primaryGenr
 
     if (testResponse.status === 403) {
         console.log("🚫 No access to Audio Features API - using estimation only");
-        return useEstimationOnly(ids, targetFeatures, primaryGenre);
+        return estimateFeaturesOnly(ids, targetFeatures, primaryGenre);
     }
 
     // Als we wel toegang hebben, probeer batch request
@@ -538,7 +537,7 @@ function calculateFeatureMatchScore(track, targetFeatures) {
 // VOEG DEZE NIEUWE FUNCTIES TOE (boven je bestaande helpers):
 
 // Functie voor alleen estimation (wanneer API niet werkt)
-function useEstimationOnly(ids, targetFeatures, primaryGenre) {
+function estimateFeaturesOnly(ids, targetFeatures, primaryGenre) {
     console.log("🧪 Using estimation-only mode for", ids.length, "tracks");
     const all = new Map();
 
@@ -602,7 +601,7 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
     try {
-        const session = await getServerSession(req, res, authOptions);
+        const session = await getSpotifySession(req, res);
         if (!session) return res.status(401).json({ error: "Not authenticated" });
 
         console.log("🔍 Starting debug of Spotify API access...");
