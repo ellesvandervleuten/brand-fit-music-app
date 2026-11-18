@@ -1,18 +1,15 @@
-// components/tabs/VisualAnalysis.jsx - Updated met Menu Upload
+// components/tabs/VisualAnalysis.jsx — foto's en menukaart uploaden
 import React, { useRef } from 'react';
-import { Camera, Upload, FileText, Eye, X } from 'lucide-react';
-import { analyzeImageWithOpenAI, analyzeWebsiteWithOpenAI } from '../../lib/logic';
+import { Camera, Upload, FileText, Info, X } from 'lucide-react';
+import { analyzeImageWithOpenAI } from '../../lib/logic';
 
 export default function VisualAnalysis({
     uploadedImages, setUploadedImages,
-    websiteScreenshot, setWebsiteScreenshot,
-    websiteAnalysis, setWebsiteAnalysis,
-    isAnalyzingScreenshot, setIsAnalyzingScreenshot,
     // NIEUW: Menu state
     menuImages, setMenuImages,
     menuAnalysis, setMenuAnalysis,
     isAnalyzingMenu, setIsAnalyzingMenu,
-    fileInputRef, screenshotInputRef,
+    fileInputRef,
     onReanalyze,
     // NIEUW: Restaurant data voor context
     brandData
@@ -42,29 +39,6 @@ export default function VisualAnalysis({
             };
             reader.readAsDataURL(file);
         }
-    };
-
-    // Bestaande website screenshot upload functie
-    const handleScreenshotUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            setWebsiteScreenshot(e.target.result);
-            setIsAnalyzingScreenshot(true);
-            setWebsiteAnalysis({ status: 'analyzing' });
-
-            try {
-                const analysis = await analyzeWebsiteWithOpenAI(file);
-                setWebsiteAnalysis(analysis);
-            } catch (err) {
-                setWebsiteAnalysis({ error: String(err), confidence_score: 0 });
-            } finally {
-                setIsAnalyzingScreenshot(false);
-            }
-        };
-        reader.readAsDataURL(file);
     };
 
     // NIEUW: Handle menu upload
@@ -149,312 +123,186 @@ export default function VisualAnalysis({
         setMenuImages(prev => prev.filter(menu => menu.id !== id));
     };
 
+
     return (
-        <div className="space-y-8">
-            {/* Visual Images (bestaand) */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Camera className="mr-2 text-blue-500" /> Visual Brand Analysis
-                </h3>
-
-                <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center mb-6">
-                    {uploadedImages.length > 0 ? (
-                        <div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                                {uploadedImages.map((image) => (
-                                    <div key={image.id} className="relative">
-                                        <img src={image.src} alt={image.name} className="w-full h-32 object-cover rounded border" />
-                                        <div className="absolute bottom-1 left-1 right-1">
-                                            <div
-                                                className={`text-xs px-2 py-1 rounded text-white ${image.analysis ? 'bg-green-500' :
-                                                    image.analyzing ? 'bg-yellow-500' :
-                                                        image.error ? 'bg-red-500' : 'bg-gray-500'
-                                                    }`}
-                                            >
-                                                {image.analysis ? 'Geanalyseerd' : image.analyzing ? 'Analyseren...' : image.error ? 'Error' : 'Pending'}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => setUploadedImages((prev) => prev.filter((img) => img.id !== image.id))}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center mx-auto"
-                            >
-                                <Upload className="mr-2" size={16} /> Voeg meer toe
-                            </button>
-                        </div>
-                    ) : (
-                        <div>
-                            <Camera className="mx-auto text-blue-400 mb-4" size={48} />
-                            <h4 className="text-lg font-medium mb-2">Upload Brand Visuals</h4>
-                            <p className="text-gray-600 mb-4">Logo, interieur foto’s, branding materiaal</p>
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center mx-auto"
-                            >
-                                <Upload className="mr-2" size={20} /> Kies Brand Images
-                            </button>
-                        </div>
-                    )}
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                </div>
+        <div className="space-y-4">
+            {/* Privacy-melding: uploads gaan naar OpenAI */}
+            <div className="flex items-start gap-3 bg-card border border-line rounded-card p-4 text-[13px] text-muted-strong">
+                <Info className="shrink-0 mt-0.5 text-copper" size={18} />
+                <p>
+                    Foto’s en menukaarten die je hier uploadt worden geanalyseerd door OpenAI.
+                    De bestanden worden na de analyse direct van onze server verwijderd.
+                    Upload geen foto’s waarop mensen herkenbaar in beeld zijn.
+                </p>
             </div>
 
-            {/* Website Screenshot (bestaand) */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Eye className="mr-2 text-green-500" /> Website Analysis
-                </h3>
+            {/* Menukaart: telt mee voor de muziekkeuze */}
+            <section className="bg-card rounded-card border border-line p-5 sm:p-6">
+                <h3 className="text-[20px] text-ink mb-1">Menukaart</h3>
+                <p className="text-muted mb-5">
+                    Aan je menu zien we welke keuken je hebt en in welke prijsklasse je zit. Dat telt mee voor de muziek.
+                    {brandData?.restaurantName && <> Voor <span className="text-ink font-medium">{brandData.restaurantName}</span>.</>}
+                </p>
 
-                <div className="border-2 border-dashed border-green-300 rounded-lg p-8 text-center mb-6">
-                    {websiteScreenshot ? (
-                        <div>
-                            <img
-                                src={websiteScreenshot}
-                                alt="Website Screenshot"
-                                className="max-w-full h-64 object-contain mx-auto rounded border mb-4"
+                {menuImages && menuImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                        {menuImages.map((menu) => (
+                            <UploadTile
+                                key={menu.id}
+                                item={menu}
+                                onRemove={() => removeMenuImage(menu.id)}
                             />
-
-                            {isAnalyzingScreenshot && (
-                                <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
-                                    <div className="flex items-center justify-center">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600 mr-2"></div>
-                                        <span className="text-yellow-800">Analyzing website with OpenAI Vision...</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex gap-2 justify-center">
-                                <button
-                                    onClick={() => screenshotInputRef.current?.click()}
-                                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                                    disabled={isAnalyzingScreenshot}
-                                >
-                                    <Upload className="mr-2 inline" size={16} /> Upload Another
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setWebsiteScreenshot(null);
-                                        setWebsiteAnalysis(null);
-                                    }}
-                                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                                    disabled={isAnalyzingScreenshot}
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div>
-                            <Eye className="mx-auto text-green-400 mb-4" size={48} />
-                            <h4 className="text-lg font-medium mb-2">Upload Website Screenshot</h4>
-                            <p className="text-gray-600 mb-4">Screenshot van website homepage voor AI analyse</p>
-                            <button
-                                onClick={() => screenshotInputRef.current?.click()}
-                                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center mx-auto"
-                            >
-                                <Upload className="mr-2" size={20} /> Upload Website
-                            </button>
-                        </div>
-                    )}
-                    <input
-                        ref={screenshotInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleScreenshotUpload}
-                        className="hidden"
-                    />
-                </div>
-
-                {websiteAnalysis && websiteAnalysis.status !== 'analyzing' && !isAnalyzingScreenshot && (
-                    <div className="bg-green-50 p-4 rounded-lg">
-                        <h4 className="font-semibold mb-3 text-green-800">Website Analysis Results</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
-                            <div className="text-center p-2 bg-white rounded">
-                                <div className="font-medium text-gray-800">Business Type</div>
-                                <div className="text-green-600">
-                                    {websiteAnalysis.business_indicators?.business_type?.replace('_', ' ') || 'N/A'}
-                                </div>
-                            </div>
-                            <div className="text-center p-2 bg-white rounded">
-                                <div className="font-medium text-gray-800">Price Range</div>
-                                <div className="text-green-600 capitalize">{websiteAnalysis.business_indicators?.price_range || 'N/A'}</div>
-                            </div>
-                            <div className="text-center p-2 bg-white rounded">
-                                <div className="font-medium text-gray-800">Cuisine</div>
-                                <div className="text-green-600 capitalize">
-                                    {websiteAnalysis.business_indicators?.cuisine_type || 'N/A'}
-                                </div>
-                            </div>
-                            <div className="text-center p-2 bg-white rounded">
-                                <div className="font-medium text-gray-800">Confidence</div>
-                                <div className="text-green-600">{((websiteAnalysis.confidence_score || 0) * 100).toFixed(0)}%</div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 )}
-            </div>
 
-            {/* NIEUW: Menu Upload Sectie */}
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <FileText className="mr-2 text-purple-500" /> Menu Analysis
-                </h3>
+                <button
+                    onClick={() => menuInputRef.current?.click()}
+                    disabled={isAnalyzingMenu}
+                    className="min-h-[44px] px-5 rounded-input bg-ink text-cream font-semibold inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-60"
+                >
+                    <Upload size={18} />
+                    {isAnalyzingMenu ? 'Bezig met lezen…' : menuImages?.length ? 'Nog een menu toevoegen' : 'Menu uploaden'}
+                </button>
+                <p className="text-muted text-[13px] mt-2">Foto of PDF</p>
+                <input
+                    ref={menuInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    multiple
+                    onChange={handleMenuUpload}
+                    className="hidden"
+                />
 
-                <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center mb-6">
-                    {menuImages && menuImages.length > 0 ? (
-                        <div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                                {menuImages.map((menu) => (
-                                    <div key={menu.id} className="relative">
-                                        <img src={menu.src} alt={menu.name} className="w-full h-32 object-cover rounded border" />
-                                        <div className="absolute bottom-1 left-1 right-1">
-                                            <div
-                                                className={`text-xs px-2 py-1 rounded text-white ${menu.analysis ? 'bg-green-500' :
-                                                    menu.analyzing ? 'bg-yellow-500' :
-                                                        menu.error ? 'bg-red-500' : 'bg-gray-500'
-                                                    }`}
-                                            >
-                                                {menu.analysis ? 'Geanalyseerd' : menu.analyzing ? 'Analyseren...' : menu.error ? 'Error' : 'Pending'}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => removeMenuImage(menu.id)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => menuInputRef.current?.click()}
-                                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center mx-auto"
-                                disabled={isAnalyzingMenu}
-                            >
-                                <Upload className="mr-2" size={16} /> Voeg meer menu’s toe
-                            </button>
-                        </div>
-                    ) : (
-                        <div>
-                            <FileText className="mx-auto text-purple-400 mb-4" size={48} />
-                            <h4 className="text-lg font-medium mb-2">Upload Menu</h4>
-                            <p className="text-gray-600 mb-4">
-                                Menukaart foto’s voor prijsanalyse en culturele context
-                                {brandData?.restaurantName && (
-                                    <span className="block text-sm text-purple-600 mt-1">
-                                        Gekoppeld aan {brandData.restaurantName}
-                                    </span>
-                                )}
-                            </p>
-                            <button
-                                onClick={() => menuInputRef.current?.click()}
-                                className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center mx-auto"
-                                disabled={isAnalyzingMenu}
-                            >
-                                <Upload className="mr-2" size={20} />
-                                {isAnalyzingMenu ? 'Analyseren...' : 'Upload Menu'}
-                            </button>
-                        </div>
-                    )}
-                    <input
-                        ref={menuInputRef}
-                        type="file"
-                        accept="image/*,.pdf"
-                        multiple
-                        onChange={handleMenuUpload}
-                        className="hidden"
-                    />
-                </div>
+                {menuAnalysis && <MenuSummary analysis={menuAnalysis} />}
+            </section>
 
-                {/* Menu Analysis Results */}
-                {menuAnalysis && (
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                        <h4 className="font-semibold mb-3 text-purple-800">Menu Analysis Results</h4>
+            {/* Foto's van de zaak */}
+            <section className="bg-card rounded-card border border-line p-5 sm:p-6">
+                <h3 className="text-[20px] text-ink mb-1">Foto’s van je zaak</h3>
+                <p className="text-muted mb-5">Interieur, logo of andere beelden van je zaak.</p>
 
-                        {/* Pricing Info */}
-                        {menuAnalysis.pricing_analysis && (
-                            <div className="mb-4">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm">
-                                    <div className="text-center p-2 bg-white rounded">
-                                        <div className="font-medium text-gray-800">Pricing Level</div>
-                                        <div className="text-purple-600 capitalize">
-                                            {menuAnalysis.pricing_analysis.pricing_level}
-                                        </div>
-                                    </div>
-                                    <div className="text-center p-2 bg-white rounded">
-                                        <div className="font-medium text-gray-800">Avg Price</div>
-                                        <div className="text-purple-600">
-                                            €{menuAnalysis.pricing_analysis.average_price}
-                                        </div>
-                                    </div>
-                                    <div className="text-center p-2 bg-white rounded">
-                                        <div className="font-medium text-gray-800">Meal Type</div>
-                                        <div className="text-purple-600 capitalize">
-                                            {menuAnalysis.pricing_analysis.meal_type}
-                                        </div>
-                                    </div>
-                                    <div className="text-center p-2 bg-white rounded">
-                                        <div className="font-medium text-gray-800">Upscale Keywords</div>
-                                        <div className="text-purple-600">
-                                            {menuAnalysis.pricing_analysis.upscale_keywords_found}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Cultural Genres */}
-                        {menuAnalysis.audio_feature_adjustments?.cultural_genres?.length > 0 && (
-                            <div className="mb-3">
-                                <div className="font-medium text-gray-800 mb-2">Cultural Music Genres:</div>
-                                <div className="flex flex-wrap gap-2">
-                                    {menuAnalysis.audio_feature_adjustments.cultural_genres.map((genre, i) => (
-                                        <span key={i} className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
-                                            {genre}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Sophistication & Features */}
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <strong>Sophistication:</strong> {((menuAnalysis.sophistication_level || 0.7) * 10).toFixed(1)}/10
-                            </div>
-                            <div>
-                                <strong>Confidence:</strong> {((menuAnalysis.confidence_score || 0) * 100).toFixed(0)}%
-                            </div>
-                        </div>
+                {uploadedImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                        {uploadedImages.map((image) => (
+                            <UploadTile
+                                key={image.id}
+                                item={image}
+                                onRemove={() => setUploadedImages((prev) => prev.filter((img) => img.id !== image.id))}
+                            />
+                        ))}
                     </div>
                 )}
-            </div>
 
-            {/* Heranalyse button (bestaand) */}
-            {(uploadedImages.length > 0 || websiteAnalysis || menuAnalysis) && (
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="font-semibold text-lg mb-1">Integreer Visual Data</h4>
-                            <p className="text-sm opacity-90">Heranalyse met visual input, website en menu data voor optimale features</p>
-                        </div>
-                        <button
-                            onClick={onReanalyze}
-                            className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 font-semibold"
-                        >
-                            Heranalyse
-                        </button>
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="min-h-[44px] px-5 rounded-input bg-sand text-ink font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                >
+                    <Camera size={18} />
+                    {uploadedImages.length ? 'Meer foto’s toevoegen' : 'Foto’s kiezen'}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+            </section>
+
+            {(uploadedImages.length > 0 || menuAnalysis) && (
+                <div className="bg-card rounded-card border border-line p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-[20px] text-ink">Klaar met uploaden?</h3>
+                        <p className="text-muted">We passen je muziekprofiel aan op wat we gezien hebben.</p>
+                    </div>
+                    <button
+                        onClick={onReanalyze}
+                        className="min-h-[44px] px-6 rounded-input bg-ink text-cream font-semibold hover:opacity-90"
+                    >
+                        Bekijk je muziek
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function UploadTile({ item, onRemove }) {
+    const isPdf = /\.pdf$/i.test(item.name || '') || String(item.src || '').startsWith('data:application/pdf');
+    const status = item.analyzing ? 'Bezig…' : item.error ? 'Niet gelukt' : item.analysis ? 'Gelezen' : '';
+    return (
+        <div className="relative rounded-input overflow-hidden border border-line bg-sand">
+            {isPdf ? (
+                <div className="h-32 flex flex-col items-center justify-center gap-2 text-muted-strong px-2">
+                    <FileText size={28} />
+                    <span className="text-[12px] truncate max-w-full">{item.name}</span>
+                </div>
+            ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.src} alt={item.name} className="w-full h-32 object-cover" />
+            )}
+            {status && (
+                <span
+                    className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[12px] font-semibold ${
+                        item.error ? 'bg-copper-soft text-copper-text' : 'bg-card/90 text-ink'
+                    }`}
+                >
+                    {status}
+                </span>
+            )}
+            <button
+                onClick={onRemove}
+                aria-label="Verwijderen"
+                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-card/90 text-ink flex items-center justify-center hover:bg-card"
+            >
+                <X size={16} />
+            </button>
+        </div>
+    );
+}
+
+const PRICE_LABELS = {
+    budget: 'Betaalbaar',
+    'mid-range': 'Middenklasse',
+    upscale: 'Hoger segment',
+    premium: 'Exclusief',
+};
+
+const MEAL_LABELS = {
+    breakfast: 'Ontbijt',
+    lunch: 'Lunch',
+    dinner: 'Diner',
+};
+
+function MenuSummary({ analysis }) {
+    const pricing = analysis.pricing_analysis;
+    const genres = analysis.audio_feature_adjustments?.cultural_genres || [];
+    return (
+        <div className="mt-6 pt-5 border-t border-line">
+            <p className="uppercase text-[12px] tracking-[0.1em] font-semibold text-muted mb-3">Wat we zagen</p>
+            {pricing && (
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                    <Stat label="Prijsklasse" value={PRICE_LABELS[pricing.pricing_level] || pricing.pricing_level} strong />
+                    <Stat label="Gemiddelde prijs" value={pricing.average_price ? `€ ${pricing.average_price}` : '–'} />
+                    <Stat label="Vooral" value={MEAL_LABELS[pricing.meal_type] || pricing.meal_type} />
+                </div>
+            )}
+            {genres.length > 0 && (
+                <div>
+                    <p className="text-muted text-[13px] mb-2">Muziek die bij je keuken past</p>
+                    <div className="flex flex-wrap gap-2">
+                        {genres.map((g, i) => (
+                            <span key={i} className="px-3 py-1 rounded-full bg-apricot-soft text-ink text-[13px] font-medium capitalize">
+                                {g}
+                            </span>
+                        ))}
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function Stat({ label, value, strong = false }) {
+    return (
+        <div>
+            <p className="text-muted text-[13px]">{label}</p>
+            <p className={`tabular-nums ${strong ? 'font-display text-[20px] text-ink' : 'text-muted-strong font-medium'}`}>{value}</p>
         </div>
     );
 }

@@ -1,242 +1,237 @@
-// components/tabs/QuestionWizard.jsx - FIXED met 8 stappen incl. demographics
+// components/tabs/QuestionWizard.jsx - vragenlijst in 8 stappen (Mise-huisstijl)
 import React from 'react';
 import { CheckCircle, Store, Coffee, Utensils, Wine, Clock, Users, DollarSign, Timer, BarChart3, Star } from 'lucide-react';
 
-// NIEUWE brandQuestions met demographics als stap 5
+const iconClass = "mr-3 shrink-0 text-muted-strong";
+
+// Let op: de `id`s hieronder worden opgeslagen in brandData en gebruikt door de logica.
+// Alleen labels en uitleg mogen wijzigen.
 const brandQuestions = {
     1: {
-        title: "Wat is de naam van je restaurant/zaak?",
-        subtitle: "Dit helpt ons je brand te personaliseren",
+        title: "Hoe heet je zaak?",
+        subtitle: "Dan zetten we de naam van je zaak op het advies.",
         type: "text",
         required: true
     },
     2: {
-        title: "Wat voor type zaak heb je?",
-        subtitle: "Kies het type dat het beste bij je zaak past",
+        title: "Wat voor zaak heb je?",
+        subtitle: "Kies wat er het meest op lijkt.",
         type: "single",
         options: [
             {
                 id: "fine_dining",
-                label: "Fine Dining",
-                subtitle: "Hoogwaardige culinaire ervaring",
-                icon: <Utensils className="mr-3 text-purple-600" size={20} />
+                label: "Fine dining",
+                subtitle: "Uitgebreid en culinair, gasten komen voor de ervaring",
+                icon: <Utensils className={iconClass} size={20} />
             },
             {
                 id: "casual_dining",
-                label: "Casual Dining",
-                subtitle: "Ontspannen eetervaring",
-                icon: <Store className="mr-3 text-blue-600" size={20} />
+                label: "Restaurant",
+                subtitle: "Ongedwongen lekker uit eten",
+                icon: <Store className={iconClass} size={20} />
             },
             {
                 id: "brunch_breakfast",
-                label: "Brunch/Breakfast Spot",
-                subtitle: "Ontbijt en brunch specialist",
-                icon: <Coffee className="mr-3 text-orange-600" size={20} />
+                label: "Ontbijt- of brunchzaak",
+                subtitle: "Vooral open in de ochtend en rond lunchtijd",
+                icon: <Coffee className={iconClass} size={20} />
             },
             {
                 id: "coffee_shop",
-                label: "Coffee Shop",
-                subtitle: "Koffie en lichte maaltijden",
-                icon: <Coffee className="mr-3 text-brown-600" size={20} />
+                label: "Koffiezaak",
+                subtitle: "Koffie met iets lekkers of een lichte lunch",
+                icon: <Coffee className={iconClass} size={20} />
             },
             {
                 id: "bar_lounge",
-                label: "Bar/Lounge",
-                subtitle: "Drinks en sfeer",
-                icon: <Wine className="mr-3 text-red-600" size={20} />
+                label: "Bar of lounge",
+                subtitle: "Draait om drankjes en sfeer",
+                icon: <Wine className={iconClass} size={20} />
             },
             {
                 id: "quick_service",
-                label: "Quick Service",
-                subtitle: "Snelle service en takeaway",
-                icon: <Clock className="mr-3 text-green-600" size={20} />
+                label: "Snel eten en afhalen",
+                subtitle: "Gasten zijn snel geholpen of nemen het mee",
+                icon: <Clock className={iconClass} size={20} />
             }
         ]
     },
     3: {
-        title: "Wat is je primaire bedrijfsdoel met muziek?",
-        subtitle: "Kies wat je vooral wilt bereiken",
+        title: "Wat wil je met de muziek bereiken?",
+        subtitle: "Kies wat voor jou het belangrijkst is.",
         type: "single",
         options: [
             {
                 id: "high_revenue_per_customer",
-                label: "Maximaliseer besteding per klant",
-                subtitle: "Langere verblijven, hogere uitgaven",
-                icon: <DollarSign className="mr-3 text-green-600" size={20} />
+                label: "Gasten blijven langer en bestellen meer",
+                subtitle: "Nog een drankje, toch een dessert",
+                icon: <DollarSign className={iconClass} size={20} />
             },
             {
                 id: "high_table_turnover",
-                label: "Maximaliseer tafelomzet",
-                subtitle: "Snellere doorstroming, meer klanten",
-                icon: <Timer className="mr-3 text-blue-600" size={20} />
+                label: "Snellere doorloop van tafels",
+                subtitle: "Meer gasten op een drukke dag",
+                icon: <Timer className={iconClass} size={20} />
             },
             {
                 id: "balanced_operation",
-                label: "Gebalanceerde operatie",
-                subtitle: "Beide optimaliseren",
-                icon: <BarChart3 className="mr-3 text-purple-600" size={20} />
+                label: "Mooi in balans",
+                subtitle: "Een beetje van allebei",
+                icon: <BarChart3 className={iconClass} size={20} />
             },
             {
                 id: "premium_experience",
-                label: "Premium ervaring",
-                subtitle: "Sophistication boven alles",
-                icon: <Star className="mr-3 text-yellow-600" size={20} />
+                label: "Luxere sfeer",
+                subtitle: "De beleving gaat voor alles",
+                icon: <Star className={iconClass} size={20} />
             }
         ]
     },
     4: {
-        title: "Welke vibe past het beste bij je zaak?",
-        subtitle: "Kies de atmosfeer die je wilt uitstralen",
+        title: "Welke sfeer past het best bij je zaak?",
+        subtitle: "Denk aan je keuken, inrichting en uitstraling.",
         type: "single",
         options: [
             {
                 id: "local_authentic",
-                label: "Lokaal & Authentiek",
-                subtitle: "Lokale tradities en gerechten",
-                icon: <Users className="mr-3 text-green-600" size={20} />
+                label: "Lokaal en authentiek",
+                subtitle: "Streekgerechten en eigen tradities",
+                icon: <Users className={iconClass} size={20} />
             },
             {
                 id: "european_sophisticated",
-                label: "Europees & Sophisticated",
-                subtitle: "Verfijnde Europese stijl",
-                icon: <Wine className="mr-3 text-purple-600" size={20} />
+                label: "Europees en verfijnd",
+                subtitle: "Stijlvol, met een Europese keuken",
+                icon: <Wine className={iconClass} size={20} />
             },
             {
                 id: "international_modern",
-                label: "International & Modern",
-                subtitle: "Wereldse en hedendaagse aanpak",
-                icon: <Store className="mr-3 text-blue-600" size={20} />
+                label: "Internationaal en modern",
+                subtitle: "Smaken uit de hele wereld, eigentijds",
+                icon: <Store className={iconClass} size={20} />
             },
             {
                 id: "classic_timeless",
-                label: "Classic & Timeless",
-                subtitle: "Tijdloze elegantie",
-                icon: <Utensils className="mr-3 text-gray-600" size={20} />
+                label: "Klassiek en tijdloos",
+                subtitle: "Elegant, zonder modegrillen",
+                icon: <Utensils className={iconClass} size={20} />
             }
         ]
     },
-    5: { // NIEUWE demographics vraag
-        title: "Wat is je hoofddoelgroep?",
-        subtitle: "Kies wat het beste past bij je klanten (meerdere mogelijk)",
+    5: {
+        title: "Wie zijn je gasten vooral?",
+        subtitle: "Je mag meerdere groepen kiezen.",
         type: "multiple",
         options: [
-            { 
-                id: "young_adults", 
-                label: "Jongeren 18-35", 
-                subtitle: "studenten, young professionals",
-                icon: <Users className="mr-3 text-cyan-600" size={20} /> 
+            {
+                id: "young_adults",
+                label: "Jongeren (18 tot 35)",
+                subtitle: "Studenten en starters",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "business_professionals", 
-                label: "Business & Professionals", 
-                subtitle: "zakenlunch, meetings",
-                icon: <Users className="mr-3 text-gray-600" size={20} /> 
+            {
+                id: "business_professionals",
+                label: "Zakelijke gasten",
+                subtitle: "Zakenlunch, afspraak of overleg",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "families_groups", 
-                label: "Families & Vriendengroepen", 
-                subtitle: "gezellig uit eten",
-                icon: <Users className="mr-3 text-green-600" size={20} /> 
+            {
+                id: "families_groups",
+                label: "Gezinnen en vriendengroepen",
+                subtitle: "Gezellig samen uit eten",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "locals_regulars", 
-                label: "Locals & Vaste Klanten", 
-                subtitle: "buurtcafé, stamgasten",
-                icon: <Users className="mr-3 text-blue-600" size={20} /> 
+            {
+                id: "locals_regulars",
+                label: "Buurtbewoners en vaste gasten",
+                subtitle: "Mensen die je bij naam kent",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "seniors_mature", 
-                label: "50+ Generatie", 
-                subtitle: "rustig, kwaliteit, comfort",
-                icon: <Users className="mr-3 text-purple-600" size={20} /> 
+            {
+                id: "seniors_mature",
+                label: "50-plussers",
+                subtitle: "Houden van rust, kwaliteit en comfort",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "tourists_visitors", 
-                label: "Toeristen & Bezoekers", 
-                subtitle: "niet-locals",
-                icon: <Users className="mr-3 text-orange-600" size={20} /> 
+            {
+                id: "tourists_visitors",
+                label: "Toeristen en dagjesmensen",
+                subtitle: "Gasten van buiten de stad",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "food_enthusiasts", 
-                label: "Food Lovers", 
-                subtitle: "koken, kwaliteit, ambacht",
-                icon: <Users className="mr-3 text-red-600" size={20} /> 
+            {
+                id: "food_enthusiasts",
+                label: "Echte fijnproevers",
+                subtitle: "Komen voor goed eten en vakmanschap",
+                icon: <Users className={iconClass} size={20} />
             },
-            { 
-                id: "quick_convenience", 
-                label: "Quick & Convenient", 
-                subtitle: "snel, praktisch, onderweg",
-                icon: <Timer className="mr-3 text-yellow-600" size={20} /> 
+            {
+                id: "quick_convenience",
+                label: "Gasten met haast",
+                subtitle: "Snel iets halen of eten, onderweg",
+                icon: <Timer className={iconClass} size={20} />
             }
         ]
     },
-    6: {
-        title: "Wat wil je bereiken met achtergrondmuziek?",
-        subtitle: "Kies per dagdeel de gewenste sfeer",
-        type: "time_based",
-        timeSlots: {
-            morning: {
-                label: "Ochtend (8:00-12:00)",
-                options: [
-                    { id: "energetic_start", label: "Energieke start", color: "bg-yellow-100 text-yellow-800" },
-                    { id: "calm_focus", label: "Rustige focus", color: "bg-blue-100 text-blue-800" },
-                    { id: "social_buzz", label: "Social buzz", color: "bg-green-100 text-green-800" }
-                ]
-            },
-            afternoon: {
-                label: "Middag (12:00-17:00)",
-                options: [
-                    { id: "productive_atmosphere", label: "Productieve sfeer", color: "bg-purple-100 text-purple-800" },
-                    { id: "relaxed_dining", label: "Ontspannen dineren", color: "bg-blue-100 text-blue-800" },
-                    { id: "background_ambiance", label: "Achtergrond ambiance", color: "bg-gray-100 text-gray-800" }
-                ]
-            },
-            evening: {
-                label: "Avond (17:00-23:00)",
-                options: [
-                    { id: "sophisticated_dining", label: "Verfijnd dineren", color: "bg-purple-100 text-purple-800" },
-                    { id: "social_atmosphere", label: "Sociale sfeer", color: "bg-red-100 text-red-800" },
-                    { id: "intimate_setting", label: "Intieme setting", color: "bg-pink-100 text-pink-800" }
-                ]
-            }
-        }
-    },
     7: {
-        title: "Snelle vibes check - Welke woorden beschrijven jouw zaak het beste?",
-        subtitle: "Kies 3-5 woorden",
+        title: "Welke woorden passen bij je zaak?",
+        subtitle: "Kies er een paar, maximaal 5.",
         type: "vibes",
         options: [
-            { id: "luxurious", label: "Luxurious", color: "bg-purple-100 text-purple-800" },
-            { id: "hip", label: "Hip", color: "bg-pink-100 text-pink-800" },
-            { id: "modern", label: "Modern", color: "bg-blue-100 text-blue-800" },
-            { id: "traditional", label: "Traditional", color: "bg-amber-100 text-amber-800" },
-            { id: "rough", label: "Rough", color: "bg-stone-100 text-stone-800" },
-            { id: "happy", label: "Happy", color: "bg-yellow-100 text-yellow-800" },
-            { id: "serious", label: "Serious", color: "bg-gray-100 text-gray-800" },
-            { id: "calm", label: "Calm", color: "bg-green-100 text-green-800" },
-            { id: "upbeat", label: "Upbeat", color: "bg-orange-100 text-orange-800" },
-            { id: "romantic", label: "Romantic", color: "bg-rose-100 text-rose-800" },
-            { id: "authentic", label: "Authentic", color: "bg-emerald-100 text-emerald-800" },
-            { id: "energetic", label: "Energetic", color: "bg-red-100 text-red-800" },
-            { id: "youthful", label: "Youthful", color: "bg-cyan-100 text-cyan-800" }
+            { id: "luxurious", label: "Luxe" },
+            { id: "hip", label: "Hip" },
+            { id: "modern", label: "Modern" },
+            { id: "traditional", label: "Traditioneel" },
+            { id: "rough", label: "Stoer en ruig" },
+            { id: "happy", label: "Vrolijk" },
+            { id: "serious", label: "Serieus" },
+            { id: "calm", label: "Rustig" },
+            { id: "upbeat", label: "Swingend" },
+            { id: "romantic", label: "Romantisch" },
+            { id: "authentic", label: "Echt en eerlijk" },
+            { id: "energetic", label: "Energiek" },
+            { id: "youthful", label: "Jong" }
         ]
     },
     8: {
-        title: "Welke muziekstijlen wil je absoluut vermijden?",
-        subtitle: "Deze genres worden uitgesloten van je playlist",
+        title: "Welke muziek wil je liever niet horen?",
+        subtitle: "Deze stijlen laten we weg. Niets kiezen mag ook.",
         type: "multiple",
         options: [
-            { id: "heavy_metal", label: "Heavy Metal", color: "bg-red-100 text-red-800" },
-            { id: "country", label: "Country", color: "bg-orange-100 text-orange-800" },
-            { id: "rap_hip_hop", label: "Rap/Hip-Hop", color: "bg-purple-100 text-purple-800" },
-            { id: "electronic_dance", label: "Electronic/Dance", color: "bg-blue-100 text-blue-800" },
-            { id: "punk_rock", label: "Punk/Rock", color: "bg-red-100 text-red-800" },
-            { id: "classical", label: "Klassiek", color: "bg-gray-100 text-gray-800" },
-            { id: "reggae", label: "Reggae", color: "bg-green-100 text-green-800" },
-            { id: "folk", label: "Folk", color: "bg-brown-100 text-brown-800" }
+            { id: "heavy_metal", label: "Heavy metal" },
+            { id: "country", label: "Country" },
+            { id: "rap_hip_hop", label: "Rap en hiphop" },
+            { id: "electronic_dance", label: "Elektronisch en dance" },
+            { id: "punk_rock", label: "Punk en rock" },
+            { id: "classical", label: "Klassiek" },
+            { id: "reggae", label: "Reggae" },
+            { id: "folk", label: "Folk" }
         ]
     }
 };
+
+const primaryButton = "ml-auto min-h-[44px] px-6 py-2 rounded-input bg-ink text-cream font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed";
+const secondaryButton = "min-h-[44px] px-5 py-2 rounded-input bg-sand text-ink font-semibold hover:opacity-90";
+const cardClass = "bg-card rounded-card border border-line p-6 text-ink";
+
+function WizardHeader({ title, subtitle, step, totalSteps }) {
+    const completed = Math.max(0, Math.min(totalSteps, step - 1));
+    return (
+        <div className="mb-6">
+            <div className="flex gap-1.5 mb-2" aria-hidden="true">
+                {Array.from({ length: totalSteps }, (_, i) => (
+                    <div
+                        key={i}
+                        className={`h-2 w-full rounded-block ${i < completed ? 'bg-copper' : 'bg-sand'}`}
+                    />
+                ))}
+            </div>
+            <p className="text-sm text-muted mb-4">Stap {step} van {totalSteps}</p>
+            <h2 className="text-xl text-ink">{title}</h2>
+            {subtitle && <p className="text-sm text-muted mt-1">{subtitle}</p>}
+        </div>
+    );
+}
 
 export default function QuestionWizard({
     analysisStep,
@@ -245,12 +240,9 @@ export default function QuestionWizard({
     setBrandData,
     onAnalyze,
 }) {
-    const handleQuestionAnswer = (questionId, answerId, isMultiple = false, timeSlot = null) => {
+    const handleQuestionAnswer = (questionId, answerId, isMultiple = false) => {
         setBrandData((prev) => {
-            if (questionId === 6 && timeSlot) { // Time-based is now step 6
-                const timeData = prev.q6 || {};
-                return { ...prev, q6: { ...timeData, [timeSlot]: answerId } };
-            } else if (isMultiple) {
+            if (isMultiple) {
                 const currentAnswers = prev[`q${questionId}`] || [];
                 const newAnswers = currentAnswers.includes(answerId)
                     ? currentAnswers.filter((id) => id !== answerId)
@@ -269,41 +261,33 @@ export default function QuestionWizard({
     const question = brandQuestions[analysisStep];
     if (!question) return null;
 
-    const totalSteps = 8; // Updated to 8
+    // Stap 6 (sfeer per dagdeel) is vervallen: die gaf één raar gemiddelde over de hele dag.
+    // De stapnummers 7 en 8 (q7, q8) blijven intern gelijk; we slaan 6 over.
+    const LAST_STEP = 8;
+    const totalSteps = 7;
+    const nextStep = (s) => (s === 5 ? 7 : s + 1);
+    const prevStep = (s) => (s === 7 ? 5 : s - 1);
+    const shownStep = (s) => (s > 6 ? s - 1 : s);
 
-    // Text input voor restaurant naam (stap 1)
+    // Stap 1: naam van de zaak
     if (question.type === 'text') {
         return (
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 className="text-xl font-semibold">{question.title}</h2>
-                            <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
-                        </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
-                        />
-                    </div>
-                </div>
+            <div className={cardClass}>
+                <WizardHeader title={question.title} subtitle={question.subtitle} step={shownStep(analysisStep)} totalSteps={totalSteps} />
 
                 <div className="mb-6">
                     <input
                         type="text"
-                        placeholder="Bijv. Café de Zon, Restaurant Valencia, The Holy..."
+                        placeholder="Bijv. Café de Zon of Restaurant Valencia"
                         value={brandData.restaurantName || ''}
                         onChange={(e) => handleTextInput(e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-lg text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                        className="w-full p-4 rounded-input border border-line-strong bg-card text-lg text-ink focus:border-ink focus:outline-none"
                         autoFocus
                     />
                     {brandData.restaurantName && brandData.restaurantName.length > 0 && (
-                        <div className="mt-2 p-2 bg-green-50 rounded text-sm text-green-700">
-                            Perfect! We gaan een gepersonaliseerde playlist maken voor {brandData.restaurantName}
-                        </div>
+                        <p className="mt-2 text-sm text-ink">
+                            Mooi, we stellen muziek samen die past bij {brandData.restaurantName}.
+                        </p>
                     )}
                 </div>
 
@@ -311,7 +295,7 @@ export default function QuestionWizard({
                     <div></div>
                     <button
                         onClick={() => setAnalysisStep(2)}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+                        className={primaryButton}
                         disabled={!brandData.restaurantName || brandData.restaurantName.trim().length === 0}
                     >
                         Volgende
@@ -321,121 +305,48 @@ export default function QuestionWizard({
         );
     }
 
-    // Time-based UI (nu stap 6)
-    if (question.type === 'time_based') {
-        return (
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 className="text-xl font-semibold">{question.title}</h2>
-                            <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
-                        </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    {Object.entries(question.timeSlots).map(([timeSlot, slotData]) => (
-                        <div key={timeSlot} className="border rounded-lg p-4">
-                            <h3 className="font-medium mb-3">{slotData.label}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                {slotData.options.map((option) => (
-                                    <button
-                                        key={option.id}
-                                        onClick={() => handleQuestionAnswer(analysisStep, option.id, false, timeSlot)}
-                                        className={`p-3 rounded-lg text-center font-medium transition-all border ${brandData.q6?.[timeSlot] === option.id
-                                            ? `${option.color} border-current`
-                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="mt-6 flex justify-between">
-                    <button
-                        onClick={() => setAnalysisStep(analysisStep - 1)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                        Vorige
-                    </button>
-                    <button
-                        onClick={() => setAnalysisStep(analysisStep + 1)}
-                        className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        disabled={!brandData.q6 || Object.keys(brandData.q6).length === 0}
-                    >
-                        Volgende
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // Vibes UI (nu stap 7)
+    // Stap 7: woorden die bij de zaak passen
     if (question.type === 'vibes') {
+        const chosen = brandData[`q${analysisStep}`] || [];
         return (
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 className="text-xl font-semibold">{question.title}</h2>
-                            <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
-                        </div>
-                        <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
-                        />
-                    </div>
+            <div className={cardClass}>
+                <WizardHeader title={question.title} subtitle={question.subtitle} step={shownStep(analysisStep)} totalSteps={totalSteps} />
+
+                <div className="flex flex-wrap gap-2">
+                    {question.options.map((option) => {
+                        const selected = chosen.includes(option.id);
+                        return (
+                            <button
+                                key={option.id}
+                                onClick={() => handleQuestionAnswer(analysisStep, option.id, true)}
+                                className={`min-h-[44px] px-4 py-2 rounded-full font-medium border text-ink disabled:opacity-40 disabled:cursor-not-allowed ${selected
+                                    ? 'bg-apricot-soft border-apricot'
+                                    : 'bg-card border-line hover:border-line-strong'
+                                    }`}
+                                disabled={brandData[`q${analysisStep}`]?.length >= 5 && !brandData[`q${analysisStep}`]?.includes(option.id)}
+                            >
+                                {option.label}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {question.options.map((option) => (
-                        <button
-                            key={option.id}
-                            onClick={() => handleQuestionAnswer(analysisStep, option.id, true)}
-                            className={`p-3 rounded-full text-center font-medium transition-all border ${brandData[`q${analysisStep}`]?.includes(option.id)
-                                ? `${option.color} border-current transform scale-105`
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                            disabled={brandData[`q${analysisStep}`]?.length >= 5 && !brandData[`q${analysisStep}`]?.includes(option.id)}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
-                </div>
-
-                {brandData[`q${analysisStep}`]?.length > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">
-                            Geselecteerd: {brandData[`q${analysisStep}`]?.length || 0} van max 5 woorden
-                        </p>
-                    </div>
+                {chosen.length > 0 && (
+                    <p className="mt-4 text-sm text-muted">
+                        {chosen.length} van maximaal 5 gekozen
+                    </p>
                 )}
 
                 <div className="mt-6 flex justify-between">
                     <button
-                        onClick={() => setAnalysisStep(analysisStep - 1)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        onClick={() => setAnalysisStep(prevStep(analysisStep))}
+                        className={secondaryButton}
                     >
                         Vorige
                     </button>
                     <button
-                        onClick={() => setAnalysisStep(analysisStep + 1)}
-                        className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        onClick={() => setAnalysisStep(nextStep(analysisStep))}
+                        className={primaryButton}
                         disabled={!brandData[`q${analysisStep}`]?.length}
                     >
                         Volgende
@@ -445,43 +356,37 @@ export default function QuestionWizard({
         );
     }
 
-    // Exclusions (nu stap 8)
+    // Stap 8: muziek die je niet wilt
     if (analysisStep === 8) {
         const q = brandQuestions[8];
         return (
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-                <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 className="text-xl font-semibold">{q.title}</h2>
-                            <p className="text-sm text-gray-600 mt-1">{q.subtitle}</p>
-                        </div>
-                        <span className="text-sm text-gray-500">Stap {totalSteps}/{totalSteps}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '100%' }} />
-                    </div>
-                </div>
+            <div className={cardClass}>
+                <WizardHeader title={q.title} subtitle={q.subtitle} step={totalSteps} totalSteps={totalSteps} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {q.options.map((option) => (
-                        <button
-                            key={option.id}
-                            onClick={() => handleQuestionAnswer(8, option.id, true)}
-                            className={`p-3 rounded-lg text-left font-medium transition-all border ${brandData.q8?.includes(option.id)
-                                ? `${option.color} border-current transform scale-105`
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
+                <div className="flex flex-wrap gap-2">
+                    {q.options.map((option) => {
+                        const selected = brandData.q8?.includes(option.id);
+                        return (
+                            <button
+                                key={option.id}
+                                onClick={() => handleQuestionAnswer(8, option.id, true)}
+                                className={`min-h-[44px] px-4 py-2 rounded-full font-medium border text-ink ${selected
+                                    ? 'bg-apricot-soft border-apricot'
+                                    : 'bg-card border-line hover:border-line-strong'
+                                    }`}
+                            >
+                                {option.label}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {brandData.q8?.length > 0 && (
-                    <div className="mt-4 p-3 bg-red-50 rounded-lg">
-                        <p className="text-sm text-red-800">
-                            Uitgesloten: {brandData.q8?.length || 0} genres – deze worden gefilterd uit je playlist
+                    <div className="mt-4 p-3 rounded-input bg-copper-soft">
+                        <p className="text-sm text-copper-text">
+                            {brandData.q8.length === 1
+                                ? '1 muziekstijl komt niet in je playlist.'
+                                : `${brandData.q8.length} muziekstijlen komen niet in je playlist.`}
                         </p>
                     </div>
                 )}
@@ -489,39 +394,25 @@ export default function QuestionWizard({
                 <div className="mt-6 flex justify-between">
                     <button
                         onClick={() => setAnalysisStep(7)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        className={secondaryButton}
                     >
                         Vorige
                     </button>
                     <button
                         onClick={onAnalyze}
-                        className="ml-auto px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        className={primaryButton}
                     >
-                        {brandData.restaurantName ? `Analyseer ${brandData.restaurantName}` : 'Analyseer Mijn Brand'}
+                        {brandData.restaurantName ? `Maak het muziekadvies voor ${brandData.restaurantName}` : 'Maak mijn muziekadvies'}
                     </button>
                 </div>
             </div>
         );
     }
 
-    // Standaard single/multiple vraag (stap 2, 3, 4, 5)
+    // Stap 2 t/m 5: één of meer keuzes uit een lijst
     return (
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 className="text-xl font-semibold">{question.title}</h2>
-                        <p className="text-sm text-gray-600 mt-1">{question.subtitle}</p>
-                    </div>
-                    <span className="text-sm text-gray-500">Stap {analysisStep}/{totalSteps}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(analysisStep / totalSteps) * 100}%` }}
-                    />
-                </div>
-            </div>
+        <div className={cardClass}>
+            <WizardHeader title={question.title} subtitle={question.subtitle} step={shownStep(analysisStep)} totalSteps={totalSteps} />
 
             <div className="space-y-3">
                 {question.options.map((option) => {
@@ -534,20 +425,22 @@ export default function QuestionWizard({
                             key={option.id}
                             onClick={() => {
                                 handleQuestionAnswer(analysisStep, option.id, question.type === 'multiple');
-                                if (question.type === 'single' && analysisStep < totalSteps) {
-                                    setTimeout(() => setAnalysisStep(analysisStep + 1), 250);
+                                if (question.type === 'single' && analysisStep < LAST_STEP) {
+                                    setTimeout(() => setAnalysisStep(nextStep(analysisStep)), 250);
                                 }
                             }}
-                            className={`w-full p-4 text-left border rounded-lg transition-all hover:border-blue-500 hover:bg-blue-50 ${selected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                            className={`w-full min-h-[44px] p-4 text-left border rounded-input text-ink ${selected
+                                ? 'bg-apricot-soft border-apricot'
+                                : 'bg-card border-line hover:border-line-strong'
                                 }`}
                         >
                             <div className="flex items-center">
                                 {option.icon}
                                 <div className="flex-1">
-                                    <span className="font-medium">{option.label}</span>
-                                    {option.subtitle && <div className="text-sm text-gray-600 mt-1">{option.subtitle}</div>}
+                                    <span className="font-semibold">{option.label}</span>
+                                    {option.subtitle && <div className="text-sm text-muted mt-1">{option.subtitle}</div>}
                                 </div>
-                                {question.type === 'multiple' && selected && <CheckCircle className="ml-auto text-blue-500" size={20} />}
+                                {question.type === 'multiple' && selected && <CheckCircle className="ml-3 shrink-0 text-ink" size={20} />}
                             </div>
                         </button>
                     );
@@ -557,17 +450,17 @@ export default function QuestionWizard({
             <div className="mt-6 flex justify-between">
                 {analysisStep > 1 && (
                     <button
-                        onClick={() => setAnalysisStep(analysisStep - 1)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        onClick={() => setAnalysisStep(prevStep(analysisStep))}
+                        className={secondaryButton}
                     >
                         Vorige
                     </button>
                 )}
 
-                {analysisStep < totalSteps && question.type === 'multiple' && (
+                {analysisStep < LAST_STEP && question.type === 'multiple' && (
                     <button
-                        onClick={() => setAnalysisStep(analysisStep + 1)}
-                        className="ml-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        onClick={() => setAnalysisStep(nextStep(analysisStep))}
+                        className={primaryButton}
                         disabled={!brandData[`q${analysisStep}`]?.length}
                     >
                         Volgende

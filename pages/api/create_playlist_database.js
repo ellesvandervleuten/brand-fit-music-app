@@ -847,8 +847,8 @@ export default async function handler(req, res) {
             year_preferences = null,
             excluded_genres = [],
             operational_goal = 'balanced_operation',
-            playlistName = "Scientific Brand-Fit Playlist (Database)",
-            playlistDescription = "Generated using database-first scientific approach",
+            playlistName = "RocketScience playlist",
+            playlistDescription = "Muziek die past bij je zaak, gemaakt met RocketScience",
         } = req.body || {};
 
         // Validate audio features
@@ -885,43 +885,11 @@ export default async function handler(req, res) {
         // Use the already fetched Spotify user data instead of fetching again
         assertOk(!!spotifyUserId, "No user id from Spotify");
 
-        // Create playlist naming
+        // Playlistnaam en -beschrijving: kort en leesbaar voor de gebruiker
         const spotifyTracks = tracks.filter(t => t.uri);
-        const culturalPrefix = cultural_context && cultural_context.detected_culture
-            ? `${cultural_context.detected_culture.charAt(0).toUpperCase() + cultural_context.detected_culture.slice(1)} `
-            : '';
-
-        const yearSuffix = year_preferences && year_preferences.description
-            ? ` (${year_preferences.min_year}+)`
-            : '';
-
-        const exclusionSuffix = excluded_genres.length > 0
-            ? ` (-${excluded_genres.length} genres)`
-            : '';
-
-        const languageSuffix = meta.filtering_results?.language_filtering?.allowed_languages?.length > 2
-            ? ` (${meta.filtering_results.language_filtering.allowed_languages.join('+')})`
-            : '';
-
-        const finalPlaylistName = spotifyTracks.length
-            ? `${culturalPrefix}${playlistName}${yearSuffix}${exclusionSuffix}${languageSuffix}`
-            : `${culturalPrefix}${playlistName} (Research Only)${yearSuffix}${exclusionSuffix}${languageSuffix}`;
-
-        const culturalDescription = cultural_context
-            ? `Cultural: ${cultural_context.detected_culture} (${cultural_context.cultural_confidence}) | `
-            : '';
-
-        const yearDescription = year_preferences
-            ? `Year Filter: ${year_preferences.min_year}+ | `
-            : '';
-
-        const languageDescription = meta.filtering_results?.language_filtering
-            ? `Languages: ${meta.filtering_results.language_filtering.allowed_languages.join(', ')} | `
-            : '';
-
-        const exclusionDescription = excluded_genres.length > 0
-            ? `Excluded: ${excluded_genres.join(', ')} | `
-            : '';
+        const dateLabel = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'Europe/Amsterdam' });
+        const finalPlaylistName = `${playlistName} · ${dateLabel}`;
+        const finalDescription = String(playlistDescription || '').slice(0, 300);
 
         const createPlaylistResp = await fetch(
             `https://api.spotify.com/v1/users/${spotifyUserId}/playlists`,
@@ -933,7 +901,7 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                     name: finalPlaylistName,
-                    description: `${playlistDescription} | ${culturalDescription}${languageDescription}${yearDescription}${exclusionDescription}Database: ${meta.database_stats?.total_tracks} tracks | Features: ${audio_features.tempo}BPM, Energy:${(audio_features.energy * 10).toFixed(1)}/10 | Sorted by popularity (high to low)`,
+                    description: finalDescription,
                     public: false,
                 }),
             }
